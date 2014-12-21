@@ -1,0 +1,13 @@
+# 'lib' will be used to store 3rd party libraries which should not be in our
+# repo (it will help us know which code is ours and keep the repo small)
+lib/
+
+# Cloud9 Stuff
+.settings
+.c9revisions/
+
+# Vagrant Stuff
+.vagrant/
+
+# Git Stuff
+.git/
