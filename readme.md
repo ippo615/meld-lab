@@ -25,14 +25,14 @@ For other systems follow the instructions on the respective websites.
 
 Clone this repo as you would any other:
 
-    git clone http://github.com/ippo615/meld-labs
+    git clone http://github.com/ippo615/meld-lab
 
 ### Load the Environment
 
 Once you've cloned the repo you can use vagrant to setup and load the
 environment:
 
-    cd meld-labs/
+    cd meld-lab/
     vagrant up
 
 The first time you run `vagrant up` may take some time because it has to
