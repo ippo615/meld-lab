@@ -1,0 +1,62 @@
+# Simple Shader (AJAX)
+
+This is the same as the simple shader but instead of embedding the
+shader code in the HTML document, we store it in it's own files and
+load them via AJAX.
+
+## Vertex Shader
+
+The vertex shader can change the location of a point in the mesh. This
+"function" gets called for each vertex. I don't want to change any
+positions so `vertex-shader.glsl` contains:
+
+	void main()	{
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+	}
+
+## Fragement Shader
+
+The fragment shader is called once per rendered pixel. You can adjust
+the color of each pixel this way. In the shader below (stored in
+`fragment-shader.glsl`) I set every pixel to yellow:
+
+	void main()	{
+		gl_FragColor = vec4(1.0, 1.0, 0.0, 0.2);
+	}
+
+## THREE.js Shader Material
+
+In your THREE.js code you need to specify that you want to use a shader
+as the material for your geometry. We also need to load the files via
+AJAX. Firefox does not allow synchronous requests in the main thread
+(it's bad for user experience) so we use asynchronous requests and
+assume they'll be finished in 100ms:
+
+	// ... omitted
+	
+	var vertexShaderText = '';
+	var vertexShaderRequest = new XMLHttpRequest();
+	vertexShaderRequest.onload = function(e){
+		vertexShaderText = e.target.responseText;
+	};
+	vertexShaderRequest.open( 'GET', 'vertex-shader.glsl', true );
+	vertexShaderRequest.send(null);
+
+	var fragmentShaderText = '';
+	var fragmentShaderRequest = new XMLHttpRequest();
+	fragmentShaderRequest.onload = function(e){
+		fragmentShaderText = e.target.responseText;
+	};
+	fragmentShaderRequest.open( 'GET', 'fragment-shader.glsl', true );
+	fragmentShaderRequest.send(null);
+
+	setTimeout( function(){
+		// Create shader material
+		var material = new THREE.ShaderMaterial( {
+			vertexShader: vertexShaderText,
+			fragmentShader: fragmentShaderText
+		} );
+
+		// ... omitted
+
+	}, 100 );

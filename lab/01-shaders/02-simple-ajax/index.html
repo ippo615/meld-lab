@@ -3,8 +3,9 @@
 	<head>
 		<title>Three.js Shaders</title>
 		<style>
-			canvas { width: 100%; height: 100% }
 			body { padding:0; margin:0; }
+			canvas { position: absolute; top:0; left:0; }
+			iframe, object { position: absolute; right:0; top:0; }
 		</style>
 	</head>
 	<body>
@@ -18,5 +19,15 @@
 		<!--<script src="http://threejs.org/build/three.min.js"></script>-->
 		<script src="https://raw.githubusercontent.com/mrdoob/three.js/r69/build/three.min.js"></script>
 		<script src="main.js"></script>
+
+		<script type="text/javascript">
+			// Show the readme on the right.
+			var obj = document.createElement('object');
+			obj.type = 'text/plain';
+			obj.data = 'readme';
+			obj.width = window.innerWidth/2;
+			obj.height = window.innerHeight;
+			document.body.appendChild(obj);
+		</script>
 	</body>
 </html>
