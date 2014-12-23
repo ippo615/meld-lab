@@ -65,7 +65,50 @@
 			};
 			render();
 
-			// Show the readme on the right.
+			/**
+			 * Show the readme file on the right
+			 *
+			 * I had a lot of room on the right of the demo so I
+			 * decided to show the readme file. It's not that easy
+			 * to do. I wanted the get the text from the file but there
+			 * were several obstacles.
+			 * 
+			 * I did not want to use AJAX because I wanted it to work
+			 * without a server running.
+			 * 
+			 * I thought html imports via the "link" tag would work but
+			 * they are not well supported in most browsers.
+			 * 
+			 * Several failed attempts are shown below (this has
+			 * absolutely nothing to do with shaders but is useful
+			 * enough that I thought it was worth noting).
+			 */
+
+			// Create an iframe to hold the readme file
+			// does not work: prompts user to download file
+			/*
+			var iframe = document.createElement('iframe');
+			iframe.src = 'readme';
+			iframe.width = window.innerWidth/2;
+			iframe.height = window.innerHeight;
+			document.body.appendChild(iframe);
+			*/
+
+			// Use an import to show the readme text
+			// Not supported by default in Firefox.
+			// Not supported in most browsers.
+			/*
+			var link = document.createElement('link');
+			link.rel = 'import';
+			link.href = 'readme'
+			link.onload = function(e) {
+				console.info( e.target.import );
+			};
+			document.head.appendChild(link);
+			*/
+
+			// Embed the readme as an object. Unfortunately only works
+			// if the extension (`.md`) is `.txt` or removed.
 			var obj = document.createElement('object');
 			obj.type = 'text/plain';
 			obj.data = 'readme';

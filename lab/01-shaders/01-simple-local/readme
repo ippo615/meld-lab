@@ -1,0 +1,44 @@
+# Simple Shader
+
+This shows how to embed vertex and fragment shaders in an html and apply
+them as a material using THREE.js.
+
+There are 3 parts to consider: the vertex shader, the fragment shader,
+and the material.
+
+## Vertex Shader
+
+The vertex shader can change the location of a point in the mesh. This
+"function" gets called for each vertex. I don't want to change any
+positions so I use:
+
+	<script id="vertexShader" type="x-shader/x-vertex">
+		void main()	{
+			gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+		}
+	</script>
+
+
+## Fragement Shader
+
+The fragment shader is called once per rendered pixel. You can adjust
+the color of each pixel this way. In the shader below I set every pixel
+to yellow:
+
+	<script id="fragmentShader" type="x-shader/x-fragment">
+		void main()	{
+			gl_FragColor = vec4(1.0, 1.0, 0.0, 0.2);
+		}
+	</script>
+
+## THREE.js Shader Material
+
+In your THREE.js code you need to specify that you want to use a shader
+as the material for your geometry:
+
+	// ...
+	var material = new THREE.ShaderMaterial( {
+		vertexShader: document.getElementById( 'vertexShader' ).textContent,
+		fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+	} );
+	// ...
