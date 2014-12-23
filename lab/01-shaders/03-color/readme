@@ -1,0 +1,75 @@
+# Uniform Color
+
+You can pass variables to shaders. There are 3 different types of
+variables available to shaders. This example shows "uniforms". A
+uniform variable is the same for every vertex and every fragment which
+uses it (ie it is uniform across the entire mesh).
+
+We'll define a color uniform to control the color of the drawn sphere.
+
+## Vertex Shader
+
+Nothing special here (same code as the last few examples):
+
+	void main()	{
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+	}
+
+## Fragement Shader
+
+You need to declare the shaders that will use it. I planned on using 
+my `color` uniform in the fragment shader so I declared it as a `vec3`
+with the name `color`. The following code is the complete shader:
+
+	uniform vec3 color;
+	void main()	{
+		gl_FragColor = vec4(color, 1.0);
+	}
+
+## THREE.js Shader Material
+
+THREE.js has to pass the uniforms to the shaders so you also need to 
+tell THREE.js about any uniforms that you will be using. The following
+code creates the shader material with a `color` uniform:
+
+	// ... omitted
+	
+	var material = new THREE.ShaderMaterial( {
+		uniforms: {
+			color: {
+				type: 'c',
+				value: new THREE.Color( 0.0, 1.0, 0.0 )
+			}
+		},
+		vertexShader: document.getElementById( 'vertexShader' ).textContent,
+		fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+	} );
+
+	// ... omitted
+
+One important thing to note is that the type specified to THREE.js (`c`)
+is not the same type specified in the shader code (`uniform vec3`). The
+following table is a useful guide for which types to use where:
+
+    Uniform Type  GLSL         JavaScript
+    ------------  -----------  ------------------
+    'i', '1i'     int          Number
+    'f', '1f'     float        Number
+    'v2'          vec2         THREE.Vector2
+    'v3'          vec3         THREE.Vector3
+    'c'           vec3         THREE.Color
+    'v4'          vec4         THREE.Vector4
+    'm3'          mat3         THREE.Matrix3
+    'm4'          mat4         THREE.Matrix4
+    't'           sampler2D    THREE.Texture
+    't'           samplerCube  THREE.CubeTexture
+
+`color` is an arbitrary name, you could have called that
+`my_uniform_color` or almost anything else (as long as you update it in
+the shader code and the THREE.js code).
+
+The `uniforms` property of the shader material can have more than one 
+key/value pair.
+
+For more info look at [THREE.js's documentation for shader materials](
+http://threejs.org/docs/#Reference/Materials/ShaderMaterial).
