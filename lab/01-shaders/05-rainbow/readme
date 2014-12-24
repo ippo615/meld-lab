@@ -1,0 +1,70 @@
+# Varying Colors
+
+In the last example I showed that attributes do not work in fragment
+shaders. Attributes are definined per vertex and work in vertex
+shaders. To pass data from the vertex shader to the fragment shader we
+can use a `varying`.
+
+## Vertex Shader
+
+We added code to pass the color attribute to the fragment shader:
+
+	attribute vec3 aColor;
+	varying vec3 vColor;
+	void main()	{
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+		vColor = aColor;
+	}
+
+There are some important things to note: you must define both the
+`attribute` and the `varying`. In the main function you have to set the
+`varying`.
+
+I would like to call both the `attribute` and the `varying` "color" but
+I cannot give them the same name so I added a prefix to each: `aColor`
+is the color attribute and `vColor` is the varying color.
+
+## Fragement Shader
+
+The fragment shader is very simply; we just have to declare and use the
+varying:
+
+	varying vec3 vColor;
+	void main()	{
+		gl_FragColor = vec4(vColor, 1.0);
+	}
+
+## THREE.js Shader Material
+
+We need to make the material and include the attribute that describes
+the color for each vertex:
+
+	// ... omitted
+	
+	// Generate a different color for each vertex
+	var vertexColors = [];
+	for( var i=0.0, l=geometry.vertices.length; i<l; i+=1.0 ){
+		vertexColors.push( new THREE.Color( 0x0 ) );
+		vertexColors[i].setHSL( i/l, 1.0, 0.5 );
+	}
+
+	// Apply the material
+	var material = new THREE.ShaderMaterial( {
+		attributes: {
+			aColor: {
+				type: 'c',
+				value: vertexColors
+			}
+		},
+		vertexShader: document.getElementById( 'vertexShader' ).textContent,
+		fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+	} );
+
+	// ... omitted
+
+You should see a ball that is colored like a rainbow (the hue is set by
+the index of the vertex).
+
+WebGL automatically interpolates the data between each vertex which
+creates a smooth gradient from one vertex to another. The seam that you
+see is caused by the vertex ordering.

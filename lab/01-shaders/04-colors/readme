@@ -1,0 +1,89 @@
+# Color Attributes
+
+Attributes are use to assign variables on a per-vertex basis. Each
+vertex of a geometry can have a different value of this property. This
+means that attributes are arrays of values (uniforms are single values).
+
+The following code is WRONG so don't do it. I'm just illustrating the
+connection between uniforms and attributes (and varyings (more on those
+next)).
+
+I've been working in the fragment shader for the first examples because
+it is easier to see changes in the color of a mesh than in the location
+of the vertices. Let's try to color each vertex differently; so instead
+of coloring the entire sphere green, we'll color each vertex a different
+color.
+
+## Vertex Shader
+
+Nothing special here (same code as the last few examples):
+
+	void main()	{
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+	}
+
+## Fragement Shader
+
+Our last shader had a uniform color. This time we want each vertex to be
+a different color so let's change the `uniform` to an `attribute`:
+
+	attribute vec3 color;
+	void main()	{
+		gl_FragColor = vec4(color, 1.0);
+	}
+
+## THREE.js Shader Material
+
+We need to make the material and include the attribute that describes
+the color for each vertex:
+
+	// ... omitted
+	
+	// Generate a differenc color for each vertex
+	var vertexColors = [];
+	for( var i=0.0, l=geometry.vertices.length; i<l; i+=1.0 ){
+		vertexColors.push(
+			(new THREE.Color( 0x0 )).setHSL( i/l, 1.0, 0.5 )
+		);
+	}
+
+	// Apply the material
+	var material = new THREE.ShaderMaterial( {
+		attributes: {
+			color: {
+				type: 'c',
+				value: vertexColors
+			}
+		},
+		vertexShader: document.getElementById( 'vertexShader' ).textContent,
+		fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+	} );
+
+	// ... omitted
+
+Like uniforms you have to be careful about specifying attribute types:
+
+    Attribute Type  GLSL   JavaScript
+    --------------  -----  ---------------
+    'f'             float  Number
+    'v2'            vec2   THREE.Vector2
+    'v3'            vec3   THREE.Vector3
+    'c'             vec3   THREE.Color
+    'v4'            vec4   THREE.Vector4
+
+## The Problem
+
+If you tried the example you'll see that it does not work. Why? Because
+fragment shaders do not support attributes. You should find an error
+message similar to following somewhere in your console:
+
+	Error: WebGL: linkProgram: a fragment shader used in this program failed to compile, with this log:
+	ERROR: 0:35: 'attribute' :  supported in vertex shaders only
+
+Fragment shades work per pixel; vertex shaders work per vertex;
+attributes are defined per vertex. Clearly attributes make more sense
+with a vertex shader but what if we want use a per vertex property in the
+fragment shader? We use something called a `varying` to pass parameters
+from the vertex shader to the fragment shader.
+
+Check out the next example to see how to use a `varying`.
