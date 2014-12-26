@@ -1,0 +1,71 @@
+# Texture Copy
+
+In this example we will use a shader to copy (or draw) a texture
+(image) onto a plane. The texture is passed to the shader as a uniform.
+
+## Vertex Shader
+
+The vertext shader does not need to do anything special. It only passes
+the UV coordinates to the fragment shader:
+
+	varying vec2 vUv;
+
+	void main() {
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+		vUv = uv;
+	}
+
+Wait a minute! Where is this `uv` declared? THREE.js automatically adds
+`attribute vec2 uv` in the vertex shader and passes the appropriate data
+for it. It is an attribute, specfically: the UV coordinate for each
+vertex (basically it maps each vertex to a location in a texture).
+
+## Fragement Shader
+
+The fragment shader needs to know about the texture and the UV
+coordinates. The texture is a uniform (because every pixel will use the
+same texture). The UV coordinate is a varying (because it varies per
+vertex):
+
+	uniform sampler2D tTexture;
+	varying vec2 vUv;
+	void main() {
+		gl_FragColor = texture2D(tTexture, vUv);
+	}
+
+`texture2D` is a function that is built in to the shader languange. It
+returns the color (a 4d vector, `vec4`) of the texture `uTexture` at
+`vUv` (a 2d vector, `vec2`).
+
+There is a huge reference on GLSL (GL Shader Language) that contains
+explainations of all the functions available.
+
+## THREE.js Shader Material
+
+Creating the material is fairly simple. THREE.js handles the UV
+coordinates automatically, so we only need to worry about passing the
+texture as a uniform:
+
+	// Create geometry (shape) and texture (image)
+	var geometry = new THREE.PlaneGeometry( window.innerWidth/2, window.innerHeight/2 );
+	var texture = new THREE.Texture(canvas);
+	texture.needsUpdate = true;
+
+	// Apply the material
+	var material = new THREE.ShaderMaterial( {
+		uniforms: {
+			tTexture: {
+				type: 't',
+				value: texture
+			}
+		},
+		vertexShader: document.getElementById( 'vertexShader' ).textContent,
+		fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+	} );
+
+	var cube = new THREE.Mesh( geometry, material );
+	scene.add( cube );
+
+I also used an orthographic projection instead of a perspective one
+because it is easier to see that the texture is copied exactly. View
+the source if you want to see more details.
