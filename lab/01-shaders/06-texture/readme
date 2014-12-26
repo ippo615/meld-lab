@@ -1,0 +1,44 @@
+# Canvas Texture
+
+The only way to get data out of the GPU (in WebGL) is with textures.
+This example does not use shaders; it only shows how to apply a texture
+as a material.
+
+The first thing we do is create a canvas, add it to the DOM, and draw
+some rectangles on it:
+
+	var canvas = document.createElement('canvas');
+	canvas.width = window.innerWidth/2;
+	canvas.height = window.innerHeight/2;
+	canvas.style.top = window.innerHeight/2+'px';
+	document.body.appendChild( canvas );
+	var ctx = canvas.getContext('2d');
+	var colors = '#F00,#FF0,#F0F,#0F0,#0FF,#00F,#F80'.split(',')
+	for( var i=0; i<30; i+=1 ){
+		var x = Math.random()*window.innerWidth/3;
+		var y = Math.random()*window.innerHeight/3;
+		var w = (0.05+0.2*Math.random())*window.innerWidth;
+		var h = (0.05+0.2*Math.random())*window.innerHeight;
+		
+		ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)];
+		ctx.strokeStyle = '#000000';
+		ctx.fillRect(x,y,w,h);
+		ctx.strokeRect(x,y,w,h);
+	}
+
+Then we create a texture from the canvas (we have to set `needsUpdate`
+to `true`; otherwise, the texture will be blank):
+
+	var texture = new THREE.Texture(canvas);
+	texture.needsUpdate = true;
+
+Finally we create a material from the texture and apply it to a
+geometry:
+
+	var material = new THREE.MeshBasicMaterial( {
+		map: texture,
+		side: THREE.FrontSide
+	} );
+
+	var cube = new THREE.Mesh( geometry, material );
+
