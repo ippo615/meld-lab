@@ -441,9 +441,32 @@ while a 50% is only 50% transparent). The implementation is shown below:
 		gl_FragColor.a = (distance(rgb,color/255.0)/1.73205080756887729352);
 	}
 
+### Treshold
+
+Thresholding splits a range of values into 1 of 2 extremes. If the
+value is above the threshold: it gets mapped to the max. If the value
+is below the threshold it gets mapped to the minimum. GLSL has a built
+in `step` function which handles that logic. We can use it to threshold
+an image as shown below:
+
+	uniform sampler2D tTexture;
+	uniform float uThresholdR;
+	uniform float uThresholdG;
+	uniform float uThresholdB;
+	varying vec2 vUv;
+	void main() {
+		vec4 pixel = texture2D(tTexture, vUv);
+		gl_FragColor.r = step(uThresholdR, pixel.r);
+		gl_FragColor.g = step(uThresholdG, pixel.g);
+		gl_FragColor.b = step(uThresholdB, pixel.b);
+		gl_FragColor.a = pixel.a;
+	}
+
+I happened to threshold each color channel separately but thresholding
+typically done on a greyscale image.
+
 ### TODO
 
- - Threshold
  - Posterize
  - Equalize?
  - Normalize?
