@@ -5,7 +5,77 @@ editor. The image shown on the bottom is a randomly generated set of
 squares. The image shown on the top is the output of the rendering
 (sometimes I make it rotate, others I leave it stationary).
 
-## DAT.GUI
+## Cavaets
+
+### No Type Casting
+
+You cannot cast from int to float or float to int. GLSL seems to have
+functions to handle that but I have been unable to get them to work
+(specifically: `intBitsToFloat`, `uintBitsToFloat`, `floatBitsToInt`,
+and `floatBitsToUint`).
+
+### New Vectors
+
+The easy way to make a 3 component vector from a 4 is:
+
+	uniform sampler2D tTexture;
+	uniform vec3 color;
+	void main() {
+		vec4 pixel = texture2D(tTexture, vUv);
+		vec3 rgb = vec3( pixel.r, pixel.g, pixel.b );
+		// omitted ...
+	}
+
+Making a constant vector:
+
+	vec4 opaqueBlack = vec4( 0.0, 0.0, 0.0, 1.0 );
+
+### Color Agreement
+
+The colors passed from THREE.js and DAT.GUI are in the 0-255 range;
+therefore, when working with a color passes to a shader you need to
+divide it by 255.0.
+
+### Distance Mapping
+
+The distance between 2 n-dimensional vectors (whose components can range
+from 0.0 to 1.0) can range between 0.0 and sqrt(n); therefore, if you
+need a distance metric to be a color value scale it by dividing by
+sqrt(n). For example the distance between 2, 3-dimensional vectors
+should be scaled by sqrt(3) (or ~1.7).
+
+### Alpha Values
+
+You can set alpha values in your fragment shader but they will have no
+effect unless your shader material has transparency enabled and is
+using an appropriate blending equation. I use the following snippet of
+code to setup the material:
+
+	// Create the material
+	var material = new THREE.ShaderMaterial( {
+		uniforms: uniforms,
+		vertexShader: document.getElementById( 'vertexShader' ).textContent,
+		fragmentShader: document.getElementById( 'fragmentShader' ).textContent,
+		transparent: true
+	} );
+
+For more control you can change the blending method:
+
+	// Create the material
+	var material = new THREE.ShaderMaterial( {
+		uniforms: uniforms,
+		vertexShader: document.getElementById( 'vertexShader' ).textContent,
+		fragmentShader: document.getElementById( 'fragmentShader' ).textContent,
+		transparent: true,
+		blending: 'NormalBlending',
+		blendSrc: 'SrcAlphaFactor',
+		blendDst: 'OneFactor'
+	} );
+
+You can see an example of the different blending methods at:
+http://threejs.org/examples/#webgl_materials_blending_custom
+
+### DAT.GUI
 
 There are some problems with using the uniforms data that gets passed
 to THREE.js as a target object for DAT.GUI. I broke the data into 2
@@ -344,6 +414,32 @@ complete shader:
 
 I cannot explain HSV as well as Wikipedia so (if you're curious) take a
 look at: https://en.wikipedia.org/wiki/HSL_and_HSV
+
+### Color To Alpha
+
+It can be hard to film at a specific location or in a specific
+environment. To combat that problem, movie makers often film infront of
+a "green screen." After the filming is completed the green background
+is replaced with the appropriate background. To achive that effect:
+anything that matches the green color is made transparent. Making that
+effect only work with a specific shade of green is boring, so instead, I
+made it work with any color. The closer the pixel is to the target color
+the more transparent it becomes (ie a 100% match is 100% transparent
+while a 50% is only 50% transparent). The implementation is shown below:
+
+	uniform sampler2D tTexture;
+	uniform vec3 color;
+	varying vec2 vUv;
+	void main() {
+		vec4 pixel = texture2D(tTexture, vUv);
+		vec3 rgb = vec3( pixel.r, pixel.g, pixel.b );
+
+		// We have to normalize the distance from 0-sqrt(3) to 0-1
+		gl_FragColor.r = pixel.r;
+		gl_FragColor.g = pixel.g;
+		gl_FragColor.b = pixel.b;
+		gl_FragColor.a = (distance(rgb,color/255.0)/1.73205080756887729352);
+	}
 
 ### TODO
 
