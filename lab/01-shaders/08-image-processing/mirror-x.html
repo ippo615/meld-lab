@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Three.js Shaders</title>
+		<style>
+			body { padding:0; margin:0; }
+			canvas { position: absolute; top:0; left:0; }
+			iframe, object { position: absolute; right:0; top:0; }
+		</style>
+	</head>
+	<body>
+
+		<script id="vertexShader" type="x-shader/x-vertex">
+			varying vec2 vUv;
+			void main() {
+				gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+				vUv = uv;
+			}
+		</script>
+
+		<script id="fragmentShaderCopy" type="x-shader/x-fragment">
+			uniform sampler2D tTexture;
+			varying vec2 vUv;
+			void main() {
+				gl_FragColor = texture2D(tTexture, vUv);
+			}
+		</script>
+
+		<script id="fragmentShaderMirrorX" type="x-shader/x-fragment">
+			uniform sampler2D tTexture;
+			varying vec2 vUv;
+			void main() {
+				vec2 point = (vUv.x < 0.5) ? vUv : vec2( 1.0-vUv.x, vUv.y );
+				gl_FragColor = texture2D(tTexture, point);
+			}
+		</script>
+
+		<!--<script src="../three.min.js"></script>-->
+		<!--<script src="http://threejs.org/build/three.min.js"></script>-->
+		<script src="https://raw.githubusercontent.com/mrdoob/three.js/r69/build/three.min.js"></script>
+		<script>
+
+			// Create a canvas
+			// This canvas will be used as a texture
+			var canvas = document.createElement('canvas');
+			canvas.width = window.innerWidth/2;
+			canvas.height = window.innerHeight/2;
+			canvas.style.top = window.innerHeight/2+'px';
+			document.body.appendChild( canvas );
+			var ctx = canvas.getContext('2d');
+			var colors = '#F00,#FF0,#F0F,#0F0,#0FF,#00F,#F80'.split(',')
+			for( var i=0; i<30; i+=1 ){
+				var x = Math.random()*window.innerWidth/3;
+				var y = Math.random()*window.innerHeight/3;
+				var w = (0.05+0.2*Math.random())*window.innerWidth;
+				var h = (0.05+0.2*Math.random())*window.innerHeight;
+				
+				ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)];
+				ctx.strokeStyle = '#000000';
+				ctx.fillRect(x,y,w,h);
+				ctx.strokeRect(x,y,w,h);
+			}
+
+			// Create the scene
+			var scene = new THREE.Scene();
+
+			// Create and position the camera
+			//var camera = new THREE.PerspectiveCamera( 75, window.innerWidth*0.5 / window.innerHeight, 0.1, 1000 );
+			//camera.position.z = 5;
+			var camera = new THREE.OrthographicCamera(
+				-window.innerWidth/4, window.innerWidth/4,
+				window.innerHeight/4, -window.innerHeight/4,
+				-1000, 1000
+			);
+			camera.position.z = 0;
+
+			// Create the thing that shows the scene
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth/2, window.innerHeight/2 );
+			document.body.appendChild( renderer.domElement );
+
+			// Create geometry (shape) and texture (image)
+			var geometry = new THREE.PlaneGeometry( window.innerWidth/2, window.innerHeight/2 );
+			var texture = new THREE.Texture(canvas);
+			texture.needsUpdate = true;
+
+			// Apply the material
+			var material = new THREE.ShaderMaterial( {
+				uniforms: {
+					tTexture: {
+						type: 't',
+						value: texture
+					}
+				},
+				vertexShader: document.getElementById( 'vertexShader' ).textContent,
+				fragmentShader: document.getElementById( 'fragmentShaderMirrorX' ).textContent
+			} );
+
+			var cube = new THREE.Mesh( geometry, material );
+			scene.add( cube );
+
+			// Main loop
+			var render = function () {
+				requestAnimationFrame(render);
+				cube.rotation.x += 0.01;
+				cube.rotation.y += 0.01;
+				renderer.render(scene, camera);
+			};
+			render();
+
+			// Show the readme on the right.
+			var obj = document.createElement('object');
+			obj.type = 'text/plain';
+			obj.data = 'readme';
+			obj.width = window.innerWidth/2;
+			obj.height = window.innerHeight;
+			document.body.appendChild(obj);
+		</script>
+	</body>
+</html>
