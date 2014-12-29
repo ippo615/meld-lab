@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Three.js Shaders</title>
+		<style>
+			body { padding:0; margin:0; }
+			canvas { position: absolute; top:0; left:0; }
+			iframe, object { position: absolute; right:0; top:0; z-index:-1; }
+		</style>
+	</head>
+	<body>
+
+		<script id="vertexShader" type="x-shader/x-vertex">
+			varying vec2 vUv;
+			void main() {
+				gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+				vUv = uv;
+			}
+		</script>
+
+		<script id="fragmentShaderPosterize" type="x-shader/x-fragment">
+			uniform sampler2D tTexture;
+			uniform int uBinsR;
+			uniform int uBinsG;
+			uniform int uBinsB;
+			varying vec2 vUv;
+			void main() {
+				vec4 pixel = texture2D(tTexture, vUv);
+				float binSizeR = 255.0 / float( uBinsR );
+				float binSizeG = 255.0 / float( uBinsG );
+				float binSizeB = 255.0 / float( uBinsB );
+				gl_FragColor.r = binSizeR * floor( 255.0 * pixel.r / binSizeR ) / 255.0;
+				gl_FragColor.g = binSizeG * floor( 255.0 * pixel.g / binSizeG ) / 255.0;
+				gl_FragColor.b = binSizeB * floor( 255.0 * pixel.b / binSizeB ) / 255.0;
+				gl_FragColor.a = pixel.a;
+			}
+		</script>
+
+		<!--<script src="../three.min.js"></script>-->
+		<!--<script src="http://threejs.org/build/three.min.js"></script>-->
+		<script src="https://dat-gui.googlecode.com/git-history/v0.5.0/build/dat.gui.min.js"></script>
+		<script src="https://raw.githubusercontent.com/mrdoob/three.js/r69/build/three.min.js"></script>
+		<script>
+
+			// Create a canvas
+			// This canvas will be used as a texture
+			var canvas = document.createElement('canvas');
+			canvas.width = window.innerWidth/2;
+			canvas.height = window.innerHeight/2;
+			canvas.style.top = window.innerHeight/2+'px';
+			document.body.appendChild( canvas );
+			var ctx = canvas.getContext('2d');
+			var colors = [];
+
+			var grd = ctx.createLinearGradient(0, 0, canvas.width, 0);
+			grd.addColorStop(0, 'rgba(255,0,0,1)');
+			grd.addColorStop(1, 'rgba(0,0,0,1)');
+			colors.push(grd);
+			var grd = ctx.createLinearGradient(0, 0, canvas.width, 0);
+			grd.addColorStop(0, 'rgba(255,255,0,1)');
+			grd.addColorStop(1, 'rgba(0,0,0,1)');
+			colors.push(grd);
+			var grd = ctx.createLinearGradient(0, 0, canvas.width, 0);
+			grd.addColorStop(0, 'rgba(255,0,255,1)');
+			grd.addColorStop(1, 'rgba(0,0,0,1)');
+			colors.push(grd);
+			var grd = ctx.createLinearGradient(0, 0, canvas.width, 0);
+			grd.addColorStop(0, 'rgba(0,255,0,1)');
+			grd.addColorStop(1, 'rgba(0,0,0,1)');
+			colors.push(grd);
+			var grd = ctx.createLinearGradient(0, 0, canvas.width, 0);
+			grd.addColorStop(0, 'rgba(0,255,255,1)');
+			grd.addColorStop(1, 'rgba(0,0,0,1)');
+			colors.push(grd);
+			var grd = ctx.createLinearGradient(0, 0, canvas.width, 0);
+			grd.addColorStop(0, 'rgba(0,0,255,1)');
+			grd.addColorStop(1, 'rgba(0,0,0,1)');
+			colors.push(grd);
+			var grd = ctx.createLinearGradient(0, 0, canvas.width, 0);
+			grd.addColorStop(0, 'rgba(255,128,0,1)');
+			grd.addColorStop(1, 'rgba(0,0,0,1)');
+			colors.push(grd);
+
+			for( var i=0; i<30; i+=1 ){
+				var x = Math.random()*window.innerWidth/3;
+				var y = Math.random()*window.innerHeight/3;
+				var w = (0.05+0.2*Math.random())*window.innerWidth;
+				var h = (0.05+0.2*Math.random())*window.innerHeight;
+				
+				ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)];
+				ctx.strokeStyle = '#000000';
+				ctx.fillRect(x,y,w,h);
+				ctx.strokeRect(x,y,w,h);
+			}
+
+			// Create the scene
+			var scene = new THREE.Scene();
+
+			// Create and position the camera
+			//var camera = new THREE.PerspectiveCamera( 75, window.innerWidth*0.5 / window.innerHeight, 0.1, 1000 );
+			//camera.position.z = 5;
+			var camera = new THREE.OrthographicCamera(
+				-window.innerWidth / 4, window.innerWidth/4,
+				window.innerHeight / 4, -window.innerHeight / 4,
+				-1000, 1000
+			);
+			camera.position.z = 0;
+
+			// Create the thing that shows the scene
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth/2, window.innerHeight/2 );
+			document.body.appendChild( renderer.domElement );
+
+			// Create geometry (shape) and texture (image)
+			var geometry = new THREE.PlaneGeometry( window.innerWidth/2, window.innerHeight/2 );
+			var texture = new THREE.Texture(canvas);
+			texture.needsUpdate = true;
+
+			var uniforms = {
+				tTexture: {
+					type: 't',
+					value: texture
+				},
+				uBinsR: {
+					type: 'i',
+					value: 2
+				},
+				uBinsG: {
+					type: 'i',
+					value: 2
+				},
+				uBinsB: {
+					type: 'i',
+					value: 2
+				},
+			};
+			var parameters = {
+				red: uniforms.uBinsR.value,
+				green: uniforms.uBinsG.value,
+				blue: uniforms.uBinsB.value,
+			};
+
+			var gui = new dat.GUI();
+			gui.add(parameters, 'red').min(2).max(64).step(1).onChange(function(value){
+				uniforms.uBinsR.value = value;
+			});
+			gui.add(parameters, 'green').min(2).max(64).step(1).onChange(function(value){
+				uniforms.uBinsG.value = value;
+			});
+			gui.add(parameters, 'blue').min(2).max(64).step(1).onChange(function(value){
+				uniforms.uBinsB.value = value;
+			});
+
+			// Apply the material
+			var material = new THREE.ShaderMaterial( {
+				uniforms: uniforms,
+				vertexShader: document.getElementById( 'vertexShader' ).textContent,
+				fragmentShader: document.getElementById( 'fragmentShaderPosterize' ).textContent
+			} );
+
+			var cube = new THREE.Mesh( geometry, material );
+			scene.add( cube );
+
+			// Main loop
+			var render = function () {
+				requestAnimationFrame(render);
+				cube.rotation.x += 0.01;
+				cube.rotation.y += 0.01;
+				renderer.render(scene, camera);
+			};
+			render();
+
+			// Show the readme on the right.
+			var obj = document.createElement('object');
+			obj.type = 'text/plain';
+			obj.data = 'readme';
+			obj.width = window.innerWidth/2;
+			obj.height = window.innerHeight;
+			document.body.appendChild(obj);
+		</script>
+	</body>
+</html>
