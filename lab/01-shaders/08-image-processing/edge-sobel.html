@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Three.js Shaders</title>
+		<style>
+			body { padding:0; margin:0; }
+			canvas { position: absolute; top:0; left:0; }
+			iframe, object { position: absolute; right:0; top:0; }
+		</style>
+	</head>
+	<body>
+
+		<script id="vertexShader" type="x-shader/x-vertex">
+			varying vec2 vUv;
+			void main() {
+				gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+				vUv = uv;
+			}
+		</script>
+
+		<script id="fragmentShaderEdgeSobel" type="x-shader/x-fragment">
+			// Based on http://threejs.org/examples/js/shaders/EdgeShader2.js
+
+			varying vec2 vUv;
+			uniform sampler2D tTexture;
+			uniform vec2 aspect;
+
+			vec2 texel = vec2(1.0 / aspect.x, 1.0 / aspect.y);
+
+			// Sobel convolution kernel(s)
+			// There are 2 masks (or kernels) for the sobel operator
+			mat3 K[2];
+			const mat3 k0 = mat3( 1.0, 2.0, 1.0,   0.0, 0.0, 0.0,  -1.0, -2.0, -1.0 );
+			const mat3 k1 = mat3( 1.0, 0.0, -1.0,  2.0, 0.0, -2.0,  1.0, 0.0, -1.0 );
+
+			void main(){
+				vec4 sample;
+
+				// Matrix for storing the r,g,b pixels values in the texel
+				mat3 R;
+				mat3 G;
+				mat3 B;
+
+				// Arrays for storing mask[i]*sample[i]
+				float r[2];
+				float g[2];
+				float b[2];
+
+				// Sobel kernel
+				K[0] = k0;
+				K[1] = k1;
+
+				// Store a 3x3 area of pixel values in R,G,B
+				for (float i=0.0; i<3.0; i++) {
+					for (float j=0.0; j<3.0; j++) {
+						sample = texture2D( tTexture, vUv + texel * vec2(i-1.0,j-1.0) );
+						R[int(i)][int(j)] = sample.r;
+						G[int(i)][int(j)] = sample.g;
+						B[int(i)][int(j)] = sample.b;
+					}
+				}
+
+				// Calculate the convolution values for all the masks 
+				for (int i=0; i<2; i++) {
+					r[i] = pow(dot(K[i][0], R[0]) + dot(K[i][1], R[1]) + dot(K[i][2], R[2]), 2.0);
+					g[i] = pow(dot(K[i][0], G[0]) + dot(K[i][1], G[1]) + dot(K[i][2], G[2]), 2.0);
+					b[i] = pow(dot(K[i][0], B[0]) + dot(K[i][1], B[1]) + dot(K[i][2], B[2]), 2.0);
+				}
+
+				// Rescale the results
+				gl_FragColor = vec4(
+					0.5 * sqrt(r[0]*r[0]+r[1]*r[1]),
+					0.5 * sqrt(g[0]*g[0]+g[1]*g[1]),
+					0.5 * sqrt(b[0]*b[0]+b[1]*b[1]),
+					1.0
+				);
+			}
+		</script>
+
+		<!--<script src="../three.min.js"></script>-->
+		<!--<script src="http://threejs.org/build/three.min.js"></script>-->
+		<script src="https://raw.githubusercontent.com/mrdoob/three.js/r69/build/three.min.js"></script>
+		<script>
+
+			// Create a canvas
+			// This canvas will be used as a texture
+			var canvas = document.createElement('canvas');
+			canvas.width = window.innerWidth/2;
+			canvas.height = window.innerHeight/2;
+			canvas.style.top = window.innerHeight/2+'px';
+			document.body.appendChild( canvas );
+			var ctx = canvas.getContext('2d');
+			var colors = '#F00,#FF0,#F0F,#0F0,#0FF,#00F,#F80'.split(',')
+			for( var i=0; i<30; i+=1 ){
+				var x = Math.random()*window.innerWidth/3;
+				var y = Math.random()*window.innerHeight/3;
+				var w = (0.05+0.2*Math.random())*window.innerWidth;
+				var h = (0.05+0.2*Math.random())*window.innerHeight;
+				
+				ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)];
+				ctx.strokeStyle = '#000000';
+				ctx.fillRect(x,y,w,h);
+				ctx.strokeRect(x,y,w,h);
+			}
+
+			// Create the scene
+			var scene = new THREE.Scene();
+
+			// Create and position the camera
+			//var camera = new THREE.PerspectiveCamera( 75, window.innerWidth*0.5 / window.innerHeight, 0.1, 1000 );
+			//camera.position.z = 5;
+			var camera = new THREE.OrthographicCamera(
+				-window.innerWidth / 4, window.innerWidth/4,
+				window.innerHeight / 4, -window.innerHeight / 4,
+				-1000, 1000
+			);
+			camera.position.z = 0;
+
+			// Create the thing that shows the scene
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth/2, window.innerHeight/2 );
+			document.body.appendChild( renderer.domElement );
+
+			// Create geometry (shape) and texture (image)
+			var geometry = new THREE.PlaneGeometry( window.innerWidth/2, window.innerHeight/2 );
+			var texture = new THREE.Texture(canvas);
+			texture.needsUpdate = true;
+
+			// Apply the material
+			var material = new THREE.ShaderMaterial( {
+				uniforms: {
+					tTexture: {
+						type: 't',
+						value: texture
+					},
+					aspect: {
+						type: 'v2',
+						value: new THREE.Vector2(window.innerWidth/2, window.innerWidth/2)
+					}
+				},
+				vertexShader: document.getElementById( 'vertexShader' ).textContent,
+				fragmentShader: document.getElementById( 'fragmentShaderEdgeSobel' ).textContent
+			} );
+
+			var cube = new THREE.Mesh( geometry, material );
+			scene.add( cube );
+
+			// Main loop
+			var render = function () {
+				requestAnimationFrame(render);
+				cube.rotation.x += 0.01;
+				cube.rotation.y += 0.01;
+				renderer.render(scene, camera);
+			};
+			render();
+
+			// Show the readme on the right.
+			var obj = document.createElement('object');
+			obj.type = 'text/plain';
+			obj.data = 'readme';
+			obj.width = window.innerWidth/2;
+			obj.height = window.innerHeight;
+			document.body.appendChild(obj);
+		</script>
+	</body>
+</html>
