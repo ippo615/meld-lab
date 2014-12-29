@@ -1,0 +1,226 @@
+# Image Editting
+
+I felt like making a bunch of stuff that you would find in an image
+editor. The image shown on the bottom is a randomly generated set of
+squares. The image shown on the top is the output of the rendering
+(sometimes I make it rotate, others I leave it stationary).
+
+## DAT.GUI
+
+There are some problems with using the uniforms data that gets passed
+to THREE.js as a target object for DAT.GUI. I broke the data into 2
+parts: the `uniforms` passed to THREE.js and the `parameters` shown by
+DAT.GUI. I have to use the `onChange` event of each parameter to update
+the uniforms. Below is an example setup for the brightness and contrast
+example:
+
+	var uniforms = {
+		tTexture: {
+			type: 't',
+			value: texture
+		},
+		uBrightness: {
+			type: 'f',
+			value: 0.0
+		},
+		uContrast: {
+			type: 'f',
+			value: 0.0
+		}
+	};
+	var parameters = {
+		brightness: uniforms.uBrightness.value,
+		contrast: uniforms.uContrast.value
+	};
+
+	var gui = new dat.GUI();
+	gui.add(parameters, 'brightness').min(-1.0).max(1.0).step(0.01).onChange(function(value){
+		uniforms.uBrightness.value = value;
+	});
+	gui.add(parameters, 'contrast').min(-0.5).max(0.5).step(0.01).onChange(function(value){
+		uniforms.uContrast.value = value;
+	});
+
+## Vertex Shader
+
+All of the vertex shaders are the same. They convert the vertex from 
+3-dimensional space to 2-dimensional space and pass the UV coordinates
+to the fragement shaders:
+
+	varying vec2 vUv;
+	void main() {
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+		vUv = uv;
+	}
+
+The fragment shaders implement the interesting part of the algorithms;
+they are based on UV coordinates.
+
+## Fragment Shaders
+
+### Copy
+
+We'll start with the most basic - a straight copy operation. All we
+have to do is read the pixel value from the UV coordinate:
+
+	uniform sampler2D tTexture;
+	varying vec2 vUv;
+	void main() {
+		gl_FragColor = texture2D(tTexture, vUv);
+	}
+
+### Invert
+
+Inversion makes black areas white and white areas black. This is
+accomplished by subtracting each of the r,g,b pixel values from 1.0 as
+shown below:
+
+	uniform sampler2D tTexture;
+	varying vec2 vUv;
+	void main() {
+		vec4 color = texture2D(tTexture, vUv);
+		gl_FragColor.r = 1.0 - color.r;
+		gl_FragColor.g = 1.0 - color.g;
+		gl_FragColor.b = 1.0 - color.b;
+		gl_FragColor.a = color.a;
+	}
+
+If you're familiar with HTML5's canvas API then you would expect that 
+`1.0` to be `255`. WebGL uses color values between 0.0 and 1.0 because
+it simplifies the combining of colors.
+
+### Luma (Greyscale)
+
+You can convert a r,g,b value to a greyscale value by a simple formula.
+A grey pixel has all of the samle values for r,g,b; therefore, we
+compute the luma value for a pixel and set r,g, and b to that value:
+
+	uniform sampler2D tTexture;
+	varying vec2 vUv;
+	void main() {
+		vec4 color = texture2D(tTexture, vUv);
+		float luma = 0.30*color.r + 0.59*color.g + 0.11*color.b;
+		gl_FragColor.r = luma;
+		gl_FragColor.g = luma;
+		gl_FragColor.b = luma;
+		gl_FragColor.a = color.a;
+	}
+
+### Colorization
+
+You can convert an image to greyscale then re-color that image so it
+looks like a specific color. To do this you compute the grey level of
+each pixel then multiply each channel by the color you want the image
+to be:
+
+	uniform sampler2D tTexture;
+	uniform vec3 colorize;
+	varying vec2 vUv;
+	void main() {
+		vec4 color = texture2D(tTexture, vUv);
+		float luma = 0.05*(0.30*color.r + 0.59*color.g + 0.11*color.b);
+		gl_FragColor.r = luma*colorize.r;
+		gl_FragColor.g = luma*colorize.g;
+		gl_FragColor.b = luma*colorize.b;
+		gl_FragColor.a = color.a;
+	}
+
+This is one scenario in which having numbers between 0.0 and 1.0 is
+better than having numbers between 0 and 255. Imagine a luma of 128
+and an r,g,b of 0,2,100; multiplication would yield an r,g,b of
+0,256,12800 which is outside of the 0-255 range so we would have to add
+an additional division of 255 to get the correct value. With the 0.0 to
+1.0 range we would have a luma of 0.5 and r,g,b of 0.0, 0.008, 0.5 and a
+final r,g,b of 0.0, 0.004, 0.25 (no additional scaling required).
+
+### RGB Adjust
+
+You can make a image more or less red (or green or blue) by scaling
+whichever channel(s) you want to amplify (or remove):
+
+	uniform sampler2D tTexture;
+	varying vec2 vUv;
+	uniform vec3 uRgbAdjust;
+	void main() {
+		vec4 color = texture2D(tTexture, vUv);
+		gl_FragColor.r = uRgbAdjust.r*color.r;
+		gl_FragColor.g = uRgbAdjust.g*color.g;
+		gl_FragColor.b = uRgbAdjust.b*color.b;
+		gl_FragColor.a = color.a;
+	}
+
+### Brightness
+
+You can make an image brighter (more white) by adding a constant to ALL
+the r,g,b values. Similarly, you can make it darker by subtracting a
+constant from all the r,g,b values:
+
+	uniform sampler2D tTexture;
+	uniform float uBrightness;
+	varying vec2 vUv;
+	void main() {
+		vec4 color = texture2D(tTexture, vUv);
+		gl_FragColor.r = clamp( color.r+uBrightness, 0.0, 1.0 );
+		gl_FragColor.g = clamp( color.g+uBrightness, 0.0, 1.0 );
+		gl_FragColor.b = clamp( color.b+uBrightness, 0.0, 1.0 );
+		gl_FragColor.a = color.a;
+	}
+
+There is a `clamp` function provided in GLSL which forces a number to
+stay between a minimum and maximum value. In the above example, I'm
+clamping the brightened (or darkened) r,g,b values between 0.0 and 1.0.
+
+### Contrast
+
+You can think of contrast as the spread of the histogram that represents
+the distribution of color channel values in the image. The maximum range
+of this histogram is 1.0 (ie a pixel with 0.0 red and another with 1.0
+red). The minimum range is 0.0 (ie all red pixels have the same red).
+
+We can "push" the color values away from the middle (0.5) to increase
+the contrast or "pull" the color values to the middle to decrease the
+contrast (ie make it more grey). This means our contrast values are
+always between -0.5 and +0.5.
+
+Increasing the contrast is handled separately from decreasing the
+contrast. For increasing the contrast: if the value is above the middle
+we add the contrast amount to the pixel's channel value; otherwise, we
+subtract. Similar logic applies to the decreasing contrast (note that 
+the sign of the contrasting value is negative).
+
+The implementation is given below:
+
+	uniform sampler2D tTexture;
+	uniform float uContrast;
+	varying vec2 vUv;
+	void main() {
+		vec4 color = texture2D(tTexture, vUv);
+		float r = color.r;
+		float g = color.g;
+		float b = color.b;
+		if( uContrast > 0.0 ){
+			r = (r > 0.5) ? clamp(r + uContrast, 0.0, 1.0) : clamp(r - uContrast, 0.0, 1.0);
+			g = (g > 0.5) ? clamp(g + uContrast, 0.0, 1.0) : clamp(g - uContrast, 0.0, 1.0);
+			b = (b > 0.5) ? clamp(b + uContrast, 0.0, 1.0) : clamp(b - uContrast, 0.0, 1.0);
+		}
+		if( uContrast < 0.0 ){
+			r = (r > 0.5) ? clamp(r + uContrast, 0.5, 1.0) : clamp(r - uContrast, 0.0, 0.5);
+			g = (g > 0.5) ? clamp(g + uContrast, 0.5, 1.0) : clamp(g - uContrast, 0.0, 0.5);
+			b = (b > 0.5) ? clamp(b + uContrast, 0.5, 1.0) : clamp(b - uContrast, 0.0, 0.5);
+		}
+		gl_FragColor.r = r;
+		gl_FragColor.g = g;
+		gl_FragColor.b = b;
+		gl_FragColor.a = color.a;
+	}
+
+### TODO
+
+ - HSV Adjust
+ - Threshold
+ - Posterize
+ - Equalize?
+ - Normalize?
+ - Noise
+   - Perlin
+   - Simple
