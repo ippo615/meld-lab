@@ -20,19 +20,14 @@
 
 		<script id="fragmentShaderPosterize" type="x-shader/x-fragment">
 			uniform sampler2D tTexture;
-			uniform int uBinsR;
-			uniform int uBinsG;
-			uniform int uBinsB;
+			uniform float uBinsR;
+			uniform float uBinsG;
+			uniform float uBinsB;
 			varying vec2 vUv;
 			void main() {
 				vec4 pixel = texture2D(tTexture, vUv);
-				float binSizeR = 255.0 / float( uBinsR );
-				float binSizeG = 255.0 / float( uBinsG );
-				float binSizeB = 255.0 / float( uBinsB );
-				gl_FragColor.r = binSizeR * floor( 255.0 * pixel.r / binSizeR ) / 255.0;
-				gl_FragColor.g = binSizeG * floor( 255.0 * pixel.g / binSizeG ) / 255.0;
-				gl_FragColor.b = binSizeB * floor( 255.0 * pixel.b / binSizeB ) / 255.0;
-				gl_FragColor.a = pixel.a;
+				vec4 binSize = 255.0 / vec4( uBinsR, uBinsG, uBinsB, 1.0 );
+				gl_FragColor = binSize * floor( 255.0 * pixel / binSize ) / 255.0;
 			}
 		</script>
 
@@ -100,7 +95,7 @@
 			//var camera = new THREE.PerspectiveCamera( 75, window.innerWidth*0.5 / window.innerHeight, 0.1, 1000 );
 			//camera.position.z = 5;
 			var camera = new THREE.OrthographicCamera(
-				-window.innerWidth / 4, window.innerWidth/4,
+				-window.innerWidth / 4, window.innerWidth / 4,
 				window.innerHeight / 4, -window.innerHeight / 4,
 				-1000, 1000
 			);
@@ -122,15 +117,15 @@
 					value: texture
 				},
 				uBinsR: {
-					type: 'i',
+					type: 'f',
 					value: 2
 				},
 				uBinsG: {
-					type: 'i',
+					type: 'f',
 					value: 2
 				},
 				uBinsB: {
-					type: 'i',
+					type: 'f',
 					value: 2
 				},
 			};

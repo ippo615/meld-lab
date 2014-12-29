@@ -465,9 +465,26 @@ an image as shown below:
 I happened to threshold each color channel separately but thresholding
 typically done on a greyscale image.
 
+### Posterize
+
+Posterization reduces the number of colors in an image by quantizing
+the r,g,b levels of each pixel. You can specify a number of bins (or 
+how many levels) you would like each channel to be divided into. The
+code is:
+
+	uniform sampler2D tTexture;
+	uniform float uBinsR;
+	uniform float uBinsG;
+	uniform float uBinsB;
+	varying vec2 vUv;
+	void main() {
+		vec4 pixel = texture2D(tTexture, vUv);
+		vec4 binSize = 255.0 / vec4( uBinsR, uBinsG, uBinsB, 1.0 );
+		gl_FragColor = binSize * floor( 255.0 * pixel / binSize ) / 255.0;
+	}
+
 ### TODO
 
- - Posterize
  - Equalize?
  - Normalize?
  - Noise
