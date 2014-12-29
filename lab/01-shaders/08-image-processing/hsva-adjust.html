@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Three.js Shaders</title>
+		<style>
+			body { padding:0; margin:0; }
+			canvas { position: absolute; top:0; left:0; }
+			iframe, object { position: absolute; right:0; top:0; z-index:-1; }
+		</style>
+	</head>
+	<body>
+
+		<script id="vertexShader" type="x-shader/x-vertex">
+			varying vec2 vUv;
+			void main() {
+				gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+				vUv = uv;
+			}
+		</script>
+
+		<script id="fragmentShaderHsvaAdjust" type="x-shader/x-fragment">
+			vec4 rgbaToHsva( vec4 pixel ){
+				vec4 hsva;
+				float r = pixel.r;
+				float g = pixel.g;
+				float b = pixel.b;
+
+				// Is the black/grey/white (ie no color)?
+				float rgbMin = min(min(r,g),b);
+				float rgbMax = max(max(r,g),b);
+				if( rgbMin == rgbMax ){
+					hsva.r = 0.0;
+					hsva.g = 0.0;
+					hsva.b = rgbMin;
+					hsva.a = pixel.a;
+					return hsva;
+				}
+
+				// Its got color
+				float d = (r==rgbMin) ? g-b : ((b==rgbMin) ? r-g : b-r);
+				float h = (r==rgbMin) ? 3.0 : ((b==rgbMin) ? 1.0 : 5.0);
+				float hue = (h - d/(rgbMax - rgbMin));
+				float sat = (rgbMax - rgbMin)/rgbMax;
+				float val = rgbMax;
+
+				hsva.r = hue/6.0;
+				hsva.g = sat;
+				hsva.b = val;
+				hsva.a = pixel.a;
+
+				return hsva;
+			}
+
+			vec4 hsvaToRgba( vec4 pixel ){
+
+				vec4 rgba;
+		
+				// hue 0-360, s 0-1, v 0-1
+				float h = pixel.r;
+				float s = pixel.g;
+				float v = pixel.b;
+
+				// If the color is not saturated then it is a shade of
+				// grey equal to the value (0.004 ~ 1.0/255.0)
+				if( s < 0.004 ) {
+					rgba.r = v;
+					rgba.g = v;
+					rgba.b = v;
+					rgba.a = pixel.a;
+					return rgba;
+				}
+
+				// The HSL colorspace is a rotated cube. It can be projected
+				// onto the "chromaticity" plane where it looks like a hexagon.
+				// We determine which edge of the hexagon this color is on and
+				// assign the computed values to the appropriate r,g,b channels.
+				h *= 6.0;
+				//int edge = floatBitsToInt( h );
+				float edge = floor( h );
+				float frac = fract( h );
+
+				// These are the RGB values.
+				float r, g ,b;
+				float p, q, t;
+				p = v * ( 1.0 - s );
+				q = v * ( 1.0 - s * frac );
+				t = v * ( 1.0 - s * ( 1.0 - frac ) );
+
+				if( edge == 0.0 ){
+						r = v;
+						g = t;
+						b = p;
+				}else if( edge == 1.0 ){
+						r = q;
+						g = v;
+						b = p;
+				}else if( edge == 2.0 ){
+						r = p;
+						g = v;
+						b = t;
+				}else if( edge == 3.0 ){
+						r = p;
+						g = q;
+						b = v;
+				}else if( edge == 4.0 ){
+						r = t;
+						g = p;
+						b = v;
+				}else{
+						r = v;
+						g = p;
+						b = q;
+				}
+
+				rgba.r = r;
+				rgba.g = g;
+				rgba.b = b;
+				rgba.a = pixel.a;
+				return rgba;
+
+			}
+
+			uniform sampler2D tTexture;
+			uniform float uHue;
+			uniform float uSaturation;
+			uniform float uValue;
+			varying vec2 vUv;
+			void main() {
+				vec4 pixel = texture2D(tTexture, vUv);
+				vec4 hsva = rgbaToHsva( pixel );
+				hsva.r = mod( hsva.r + uHue, 1.0 );
+				hsva.g = clamp( hsva.g+uSaturation, 0.0, 1.0 );
+				hsva.b = clamp( hsva.b+uValue, 0.0, 1.0 );
+				gl_FragColor = hsvaToRgba( hsva );
+			}
+		</script>
+
+		<!--<script src="../three.min.js"></script>-->
+		<!--<script src="http://threejs.org/build/three.min.js"></script>-->
+		<script src="https://dat-gui.googlecode.com/git-history/v0.5.0/build/dat.gui.min.js"></script>
+		<script src="https://raw.githubusercontent.com/mrdoob/three.js/r69/build/three.min.js"></script>
+		<script>
+
+			// Create a canvas
+			// This canvas will be used as a texture
+			var canvas = document.createElement('canvas');
+			canvas.width = window.innerWidth/2;
+			canvas.height = window.innerHeight/2;
+			canvas.style.top = window.innerHeight/2+'px';
+			document.body.appendChild( canvas );
+			var ctx = canvas.getContext('2d');
+			var colors = '#F00,#FF0,#F0F,#0F0,#0FF,#00F,#F80'.split(',')
+			for( var i=0; i<30; i+=1 ){
+				var x = Math.random()*window.innerWidth/3;
+				var y = Math.random()*window.innerHeight/3;
+				var w = (0.05+0.2*Math.random())*window.innerWidth;
+				var h = (0.05+0.2*Math.random())*window.innerHeight;
+				
+				ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)];
+				ctx.strokeStyle = '#000000';
+				ctx.fillRect(x,y,w,h);
+				ctx.strokeRect(x,y,w,h);
+			}
+
+			// Create the scene
+			var scene = new THREE.Scene();
+
+			// Create and position the camera
+			//var camera = new THREE.PerspectiveCamera( 75, window.innerWidth*0.5 / window.innerHeight, 0.1, 1000 );
+			//camera.position.z = 5;
+			var camera = new THREE.OrthographicCamera(
+				-window.innerWidth / 4, window.innerWidth/4,
+				window.innerHeight / 4, -window.innerHeight / 4,
+				-1000, 1000
+			);
+			camera.position.z = 0;
+
+			// Create the thing that shows the scene
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth/2, window.innerHeight/2 );
+			document.body.appendChild( renderer.domElement );
+
+			// Create geometry (shape) and texture (image)
+			var geometry = new THREE.PlaneGeometry( window.innerWidth/2, window.innerHeight/2 );
+			var texture = new THREE.Texture(canvas);
+			texture.needsUpdate = true;
+
+			var uniforms = {
+				tTexture: {
+					type: 't',
+					value: texture
+				},
+				uHue: {
+					type: 'f',
+					value: 0.0
+				},
+				uSaturation: {
+					type: 'f',
+					value: 0.0
+				},
+				uValue: {
+					type: 'f',
+					value: 0.0
+				},
+			};
+			var parameters = {
+				hue: uniforms.uHue.value,
+				saturation: uniforms.uSaturation.value,
+				value: uniforms.uValue.value,
+			};
+
+			var gui = new dat.GUI();
+			gui.add(parameters, 'hue').min(-1.0).max(1.0).step(1.0/255.0).onChange(function(value){
+				uniforms.uHue.value = value;
+			});
+			gui.add(parameters, 'saturation').min(-1.0).max(1.0).step(1.0/255.0).onChange(function(value){
+				uniforms.uSaturation.value = value;
+			});
+			gui.add(parameters, 'value').min(-1.0).max(1.0).step(1.0/255.0).onChange(function(value){
+				uniforms.uValue.value = value;
+			});
+
+			// Apply the material
+			var material = new THREE.ShaderMaterial( {
+				uniforms: uniforms,
+				vertexShader: document.getElementById( 'vertexShader' ).textContent,
+				fragmentShader: document.getElementById( 'fragmentShaderHsvaAdjust' ).textContent
+			} );
+
+			var cube = new THREE.Mesh( geometry, material );
+			scene.add( cube );
+
+			// Main loop
+			var render = function () {
+				requestAnimationFrame(render);
+				cube.rotation.x += 0.01;
+				cube.rotation.y += 0.01;
+				renderer.render(scene, camera);
+			};
+			render();
+
+			// Show the readme on the right.
+			var obj = document.createElement('object');
+			obj.type = 'text/plain';
+			obj.data = 'readme';
+			obj.width = window.innerWidth/2;
+			obj.height = window.innerHeight;
+			document.body.appendChild(obj);
+		</script>
+	</body>
+</html>

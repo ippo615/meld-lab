@@ -214,9 +214,139 @@ The implementation is given below:
 		gl_FragColor.a = color.a;
 	}
 
+### HSV Adjust
+
+Working in the HSV (hue, saturation, value) color space can be easier
+than working in the RGB colorspace. The HSV adjustment demo shows how
+to convert between RGB and HSV (note: HSV is not the same as HSL). To
+make this more re-usable `rgbaToHsva` and `hsvaToRgba` were coded as
+separate functions (the `main` function handles applying the
+adjustments).
+
+When converting we store the hue in the red channel, the saturation in
+the green channel, and the value in the blue channel. Below is the
+complete shader:
+
+	vec4 rgbaToHsva( vec4 pixel ){
+		vec4 hsva;
+		float r = pixel.r;
+		float g = pixel.g;
+		float b = pixel.b;
+
+		// Is the black/grey/white (ie no color)?
+		float rgbMin = min(min(r,g),b);
+		float rgbMax = max(max(r,g),b);
+		if( rgbMin == rgbMax ){
+			hsva.r = 0.0;
+			hsva.g = 0.0;
+			hsva.b = rgbMin;
+			hsva.a = pixel.a;
+			return hsva;
+		}
+
+		// Its got color
+		float d = (r==rgbMin) ? g-b : ((b==rgbMin) ? r-g : b-r);
+		float h = (r==rgbMin) ? 3.0 : ((b==rgbMin) ? 1.0 : 5.0);
+		float hue = (h - d/(rgbMax - rgbMin));
+		float sat = (rgbMax - rgbMin)/rgbMax;
+		float val = rgbMax;
+
+		hsva.r = hue/6.0;
+		hsva.g = sat;
+		hsva.b = val;
+		hsva.a = pixel.a;
+
+		return hsva;
+	}
+
+	vec4 hsvaToRgba( vec4 pixel ){
+
+		vec4 rgba;
+
+		// hue 0-360, s 0-1, v 0-1
+		float h = pixel.r;
+		float s = pixel.g;
+		float v = pixel.b;
+
+		// If the color is not saturated then it is a shade of
+		// grey equal to the value (0.004 ~ 1.0/255.0)
+		if( s < 0.004 ) {
+			rgba.r = v;
+			rgba.g = v;
+			rgba.b = v;
+			rgba.a = pixel.a;
+			return rgba;
+		}
+
+		// The HSL colorspace is a rotated cube. It can be projected
+		// onto the "chromaticity" plane where it looks like a hexagon.
+		// We determine which edge of the hexagon this color is on and
+		// assign the computed values to the appropriate r,g,b channels.
+		h *= 6.0;
+		//int edge = floatBitsToInt( h );
+		float edge = floor( h );
+		float frac = fract( h );
+
+		// These are the RGB values.
+		float r, g ,b;
+		float p, q, t;
+		p = v * ( 1.0 - s );
+		q = v * ( 1.0 - s * frac );
+		t = v * ( 1.0 - s * ( 1.0 - frac ) );
+
+		if( edge == 0.0 ){
+				r = v;
+				g = t;
+				b = p;
+		}else if( edge == 1.0 ){
+				r = q;
+				g = v;
+				b = p;
+		}else if( edge == 2.0 ){
+				r = p;
+				g = v;
+				b = t;
+		}else if( edge == 3.0 ){
+				r = p;
+				g = q;
+				b = v;
+		}else if( edge == 4.0 ){
+				r = t;
+				g = p;
+				b = v;
+		}else{
+				r = v;
+				g = p;
+				b = q;
+		}
+
+		rgba.r = r;
+		rgba.g = g;
+		rgba.b = b;
+		rgba.a = pixel.a;
+		return rgba;
+
+	}
+
+	uniform sampler2D tTexture;
+	uniform float uHue;
+	uniform float uSaturation;
+	uniform float uValue;
+	varying vec2 vUv;
+	void main() {
+		vec4 pixel = texture2D(tTexture, vUv);
+		vec4 hsva = rgbaToHsva( pixel );
+		hsva.r = mod( hsva.r + uHue, 1.0 );
+		hsva.g = clamp( hsva.g+uSaturation, 0.0, 1.0 );
+		hsva.b = clamp( hsva.b+uValue, 0.0, 1.0 );
+		gl_FragColor = hsvaToRgba( hsva );
+	}
+
+I cannot explain HSV as well as Wikipedia so (if you're curious) take a
+look at: https://en.wikipedia.org/wiki/HSL_and_HSV
+
 ### TODO
 
- - HSV Adjust
  - Threshold
  - Posterize
  - Equalize?
