@@ -562,3 +562,9 @@ The shader code is given below:
 		);
 	}
 
+#### Frei Chen
+
+The following article explains the thought process behind the Frei Chen
+edge-detection algorithm:
+http://rastergrid.com/blog/2011/01/frei-chen-edge-detector/
+
