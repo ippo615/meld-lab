@@ -2,7 +2,7 @@
 
 I felt like making a bunch of stuff that you would find in an image
 editor. The image shown on the bottom is a randomly generated set of
-squares. The image shown on the top is the output of the rendering
+rectangles. The image shown on the top is the output of the rendering
 (sometimes I make it rotate, others I leave it stationary).
 
 ## Cavaets
@@ -26,6 +26,11 @@ The easy way to make a 3 component vector from a 4 is:
 		// omitted ...
 	}
 
+Even easier (2 options):
+
+	vec3 rgb = pixel.rgb;
+	vec3 position3 = position4.xyz
+
 Making a constant vector:
 
 	vec4 opaqueBlack = vec4( 0.0, 0.0, 0.0, 1.0 );
@@ -33,7 +38,7 @@ Making a constant vector:
 ### Color Agreement
 
 The colors passed from THREE.js and DAT.GUI are in the 0-255 range;
-therefore, when working with a color passes to a shader you need to
+therefore, when working with a color passed to a shader you need to
 divide it by 255.0.
 
 ### Distance Mapping
@@ -567,4 +572,82 @@ The shader code is given below:
 The following article explains the thought process behind the Frei Chen
 edge-detection algorithm:
 http://rastergrid.com/blog/2011/01/frei-chen-edge-detector/
+
+## Compositing
+
+There are extensions to THREE.js that allow shaders to be combined and
+applied in sequence to the rendering. The `EffectComposer` can be used
+to apply a sequence of post-processing effects to the image. First the
+effect composer needs to be created and given a render pass. The render
+pass is the first pass (it renders the `scene` in the `renderer` as
+seen from the `camera`). After the render pass happens additional
+effects are applied to the result. The code below shows how to create
+and configure the render pass:
+
+	var renderer = new THREE.WebGLRenderer();
+	renderer.setSize( window.innerWidth/2, window.innerHeight/2 );
+	document.body.appendChild( renderer.domElement );
+
+	var scene = new THREE.Scene();
+	var camera = new THREE.OrthographicCamera( -320, 320, 240, -240, -100, 100 );
+
+	var composer = new THREE.EffectComposer( renderer );
+	var renderPass = new THREE.RenderPass( scene, camera );
+	composer.addPass( renderPass );
+
+To use a shader pass you need to create a shader. A shader object is a
+regular javascript object with 3 properties: a `fragmentShader`, a
+`vertexShader`, and `uniforms`. Below is the definition of the
+`xMirrorShader`:
+
+	var xMirrorShader = {
+		uniforms: {
+			tDiffuse: {
+				type: 't',
+				value: null
+			}
+		},
+		vertexShader: document.getElementById( 'vertexShader' ).textContent,
+		fragmentShader: document.getElementById( 'fragmentShaderMirrorX' ).textContent
+	};
+
+Then you can create an effect and add it to the effect composer
+sequence:
+
+	var effect = new THREE.ShaderPass( xMirrorShader );
+	composer.addPass( effect );
+
+You can also set the uniforms on the effect by accessing the 
+`effect.uniforms`:
+
+	effect.uniforms[ 'scale' ].value = 4;
+
+You must explictly specify the texture (`tDiffuse`) in the uniforms
+because it will not be created automatically. You can leave the value as
+`null`. `tDiffuse` is the default name that the texture is given.
+
+	var lumaShader = {
+		uniforms: {
+			tDiffuse: {
+				type: 't',
+				value: null
+			}
+		},
+		vertexShader: document.getElementById( 'vertexShader' ).textContent,
+		fragmentShader: document.getElementById( 'fragmentShaderLuma' ).textContent
+	};
+
+The final effect needs to have it's `renderToScreen` set to true:
+
+	var effect = new THREE.ShaderPass( lumaShader );
+	effect.renderToScreen = true;
+	composer.addPass( effect );
+
+The render loop needs to call `composer.render()` instead of
+`renderer.render()`:
+
+	var render = function () {
+		requestAnimationFrame(render);
+		composer.render();
+	};
 
