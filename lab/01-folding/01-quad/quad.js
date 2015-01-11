@@ -1,8 +1,3 @@
-// The heirarchy is important. You must apply the transformations from
-// the parent to the child (ie the child's creation is dependent on the
-// computations from the transformed parent).
-//
-// Should I include a `parent` property?
 // 
 // How can I enable easy folding animation?
 // 
@@ -14,8 +9,10 @@
 var Quad = (function(THREE){
 	function Quad(nearWidth,farWidth,length,zAngle,x,y){
 
+		this.parent = null;
 		this.geometry = new THREE.Geometry();
 		this.zAngle = zAngle || 0.0;
+		this.angle = 0.0;
 		this.origin = new THREE.Vector3( x||0, y||0, 0 );
 		this.wasMade = false;
 		this.right = null;
@@ -41,10 +38,9 @@ var Quad = (function(THREE){
 		this.geometry.faces.push(new THREE.Face3(0,1,2));
 		this.geometry.faces.push(new THREE.Face3(2,3,0));
 
-		// The problem is we need to add the parent's rotation too
-		// but i think it's only the first rotation (on the x axis) that
-		// needs to be passed to the children.
-		this.geometry.applyMatrix( (new THREE.Matrix4()).makeRotationX(angle) );
+		this.angle = angle;
+
+		this.geometry.applyMatrix( (new THREE.Matrix4()).makeRotationX(this.getWorldAngle()) );
 
 		this.geometry.applyMatrix( (new THREE.Matrix4()).makeRotationZ(zAngle) );
 		this.geometry.applyMatrix( (new THREE.Matrix4()).makeTranslation(
@@ -57,6 +53,11 @@ var Quad = (function(THREE){
 		this.left = new Quad();
 		this.far = new Quad();
 		this.near = new Quad();
+
+		this.right.parent = this;
+		this.left.parent = this;
+		this.far.parent = this;
+		this.near.parent = this;
 
 		this.near.zAngle = Math.atan2(
 			this.geometry.vertices[0].y - this.geometry.vertices[1].y,
@@ -98,6 +99,13 @@ var Quad = (function(THREE){
 			0.5*(this.geometry.vertices[3].z + this.geometry.vertices[0].z)
 		);
 
+	};
+
+	Quad.prototype.getWorldAngle = function(){
+		if( this.parent === null ){
+			return this.angle;
+		}
+		return this.angle + this.parent.getWorldAngle();
 	};
 
 	Quad.prototype.extend = function( nearWidth, farWidth, length, angle ){

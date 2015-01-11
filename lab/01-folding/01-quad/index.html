@@ -54,6 +54,7 @@
 					emissive: 0x006060,
 					shininess: 8,
 					side: THREE.DoubleSide
+					//side: THREE.FrontSide
 				}),
 				new THREE.MeshBasicMaterial( {
 					color: 0x000000,
@@ -81,7 +82,7 @@
 			base.left.extend( size, size, size, foldAngle );
 			base.near.extend( size, size, size, foldAngle );
 			base.far.extend( size, size, size, foldAngle );
-			base.far.far.extend( size, size, size, foldAngle );
+			base.far.far.extend( size, size, size, foldAngle*0.5 );
 
 			addQuad( base.geometry, materials, cube, 0,0 );
 			addQuad( base.right.geometry, materials, cube, 0,0  );
