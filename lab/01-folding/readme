@@ -1,0 +1,163 @@
+# Folding
+
+Trying to specify folds on a 2D Plane to create a 3D Shape, similar to
+how cardboard boxes are made.
+
+## Method 1
+
+This is lacking exact implementation details. See the other methods
+for more specifics.
+
+### Components
+
+Conceptually, how I am approaching this (from the end-user's point of
+view, NOT from the developer's point of view; the dev has to deal with
+more nuances which I may discuss in another section).
+
+#### Point
+
+An x,y pair.
+
+#### Line
+
+A line has a starting point and an ending point.
+
+All lines are specified in 2 dimensions (ie x,y).
+
+The left of the line is the side of the line that would be on the left
+of person standing upright at the starting point and looking toward the
+ending point. Similarly the right side of the line corresponds to the
+right side of an upright person looking from the start to the end.
+Swapping the start and end of line swaps the left and right side of the
+line.
+
+#### Fold
+
+Specifies how/where part of the 2d plane is bent into another dimension.
+A fold is made of a line, a direction, and an angle. The line determines
+which points are stationary during the fold (ie points on the fold line
+do not move). By convention: any point to the RIGHT of the line will
+move based on the direction and angle of the fold. The direction
+determines if the fold is "up" or "down" (ie does the moving side move
+up out of the 2d plane or down and out of the 2d plane). The angle
+determines how much of fold to make (ie 90 is a right angle/sharp corner
+that could be used in a box).
+
+Alternative conventions are possible. Like: points left of the line
+move by direction and angle or points on both the left and right of
+line move by direction and half the angle.
+
+Note: the line of a fold is assumed to extend forever.
+
+#### Cut
+
+Is made of a line. It can be used to create slits, remove material, or
+reshape the edges of the material.
+
+Note: the line of a fold is assumed to be limited between the start and
+end points (ie it does NOT extend forever).
+
+## Method 2
+
+Use three.js with csg.js to cut, rotate, and translate stuff.
+
+All of the initial shapes would be really thin (ie a plane of 0 depth).
+Will csg allow that?
+
+Shapes can be added/cut (but we'll limit it to a 2D plane) to make a
+more complicated shape. 
+
+Folds will happen as follows. Assume the right side will be folded "up" 
+by 90 degrees. The fold line will be extended to a really BIG plane (or
+shallow cube) to the right (I'll refer to this as the "mask shape").
+The intersetion of the mask shape with the original shape will be
+"dynamic" part of the fold. The original shape minus the mask shape
+will be the "static" part of the fold. The dynamic part of the fold
+will be transformated (in this case rotated 90 degrees along the 
+appropriate axis and translated so the fold line matches).
+
+How to consistenly handle multiple folds? Process them in reverse order
+of what the user specified? Do we want the user to care about order?
+
+## Method 3
+
+Start with a base shape (ie a square). Each edge can be "extruded" with
+a length, angle, direction. The angle and direction determine the fold,
+while the length determines the size.
+
+This is simple enought that I can compute the triangulation for
+rendering myself and can guarentee that it is infinitesmally thin.
+
+## Method 4
+
+Similar to Method 3 (maybe a more generic version).
+
+The user can specify quadrilateral shapes and can join them at edges.
+The following code should be creating a 12x12x12 cube:
+
+	// quad( nearWidth, farWidth, length )
+	var side = quad( 12, 12, 12 );
+	var sides = [
+		side.clone(),
+		side.clone(),
+		side.clone(),
+		side.clone(),
+		side.clone(),
+		side.clone()
+	];
+	// quad.join( sideIndex, shape, angle )
+	sides[0].join( 0, sides[1], 90 );
+	sides[0].join( 1, sides[2], 90 );
+	sides[0].join( 2, sides[3], 90 );
+	sides[0].join( 3, sides[4], 90 );
+	sides[1].join( 2, sides[5], 90 );
+
+Finding the appropriate way to reference the sides needs work. There
+are several transformations that can happen which complicate it. First,
+I would assume the 'base edge' is sideIndex 0, then they are labelled
+(1,2,3) clockwise (to be determined) from there. 
+
+Maybe instead of numbers we can use side names:
+
+	sides[0].join_near( sides[1], 90 );
+	sides[0].join_left( sides[2], 90 );
+	sides[0].join_far( sides[3], 90 );
+	sides[0].join_right( sides[4], 90 );
+	sides[1].join_far( sides[3], 90 );
+
+Or maybe this is more natural:
+
+	sides[0].near.join( sides[1], 90 );
+	sides[0].left.join( sides[2], 90 );
+	sides[0].far.join( sides[3], 90 );
+	sides[0].right.join( sides[4], 90 );
+	sides[1].far.join( sides[3], 90 );
+
+### Additional Notes
+
+Sides should only be `join`ed (`fold` would probably be a better verb)
+once otherwise the shape cannot be made from a planar source.
+
+Sides that are sized less than 0 (<=0) should match the side they are
+joined to.
+
+Is a nested syntax good? ie `sides[0].near.right.left.far` refers to
+a specific side.
+
+What about alignment? Intuitively, I would align the center of the
+joined edges; however, there are cases where I would not want to do
+that. Cases where you don't want the other part to be symmetric (ie a
+paper craft car). Left, center, right alignment seems to be useless:
+the user can simply extend parts with non-folds to create the desired
+shapes/sizes.
+
+Different quad constructors? It's easy to craete sides that meet
+perfectly at right angles. Other angles can be problematic (you're
+trying to match an angle and length in 2 different locations). Should
+we use quad contrustors that use legnth+angle for the left/right edges?
+Should we provide functions that check for proper angle matching/edge
+connectivity?
+
+Tessellation (ie polygon triagulation) is EASY. I just need to make one
+2D quadrilateral that is properly tessellated and parameterize, copy,
+and reuse that.
