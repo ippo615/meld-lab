@@ -52,7 +52,8 @@
 					specular: 0xAACCFF,
 					color: 0x00AABB,
 					emissive: 0x006060,
-					shininess: 8
+					shininess: 8,
+					side: THREE.DoubleSide
 				}),
 				new THREE.MeshBasicMaterial( {
 					color: 0x000000,
@@ -68,25 +69,33 @@
 				}
 			}
 			*/
-			var base = new Quad( 0.5, 0.5, 0.5, 0, 0,0 );
-			base.right.extend( 0.5, 0.5, 0.5 );
-			base.left.extend( 0.5, 0.5, 0.5 );
-			base.near.extend( 0.5, 0.5, 0.5 );
-			base.far.extend( 0.5, 0.5, 0.5 );
-			base.far.far.extend( 0.5, 0.5, 0.5 );
 
-			addQuad( base.geometry, materials, scene, 0,0 );
-			addQuad( base.right.geometry, materials, scene, 0,0  );
-			addQuad( base.left.geometry, materials, scene, 0,0  );
-			addQuad( base.near.geometry, materials, scene, 0,0  );
-			addQuad( base.far.geometry, materials, scene, 0,0  );
-			addQuad( base.far.far.geometry, materials, scene, 0,0  );
+			var cube = new THREE.Object3D();
+
+			var foldAngle = Math.PI/2.0;
+			//var foldAngle = 0.0;
+			var size = 1.0;
+
+			var base = new Quad( size, size, size, 0, 0,0 );
+			base.right.extend( size, size, size, foldAngle );
+			base.left.extend( size, size, size, foldAngle );
+			base.near.extend( size, size, size, foldAngle );
+			base.far.extend( size, size, size, foldAngle );
+			base.far.far.extend( size, size, size, foldAngle );
+
+			addQuad( base.geometry, materials, cube, 0,0 );
+			addQuad( base.right.geometry, materials, cube, 0,0  );
+			addQuad( base.left.geometry, materials, cube, 0,0  );
+			addQuad( base.near.geometry, materials, cube, 0,0  );
+			addQuad( base.far.geometry, materials, cube, 0,0  );
+			addQuad( base.far.far.geometry, materials, cube, 0,0  );
+			scene.add( cube );
 
 			// Main loop
 			var render = function () {
 				requestAnimationFrame(render);
-				//cube.rotation.x += 0.01;
-				//cube.rotation.y += 0.01;
+				cube.rotation.x += 0.01;
+				cube.rotation.y += 0.01;
 				renderer.render(scene, camera);
 			};
 			render();

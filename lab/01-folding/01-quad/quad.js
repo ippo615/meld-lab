@@ -1,3 +1,16 @@
+// The heirarchy is important. You must apply the transformations from
+// the parent to the child (ie the child's creation is dependent on the
+// computations from the transformed parent).
+//
+// Should I include a `parent` property?
+// 
+// How can I enable easy folding animation?
+// 
+// Should I not work with geometries and switch to THREE.Object3D?
+// Object3D has a heirarchy structure so I can nest and apply
+// transformations easily.
+// 
+
 var Quad = (function(THREE){
 	function Quad(nearWidth,farWidth,length,zAngle,x,y){
 
@@ -14,19 +27,24 @@ var Quad = (function(THREE){
 		&& farWidth !== undefined
 		&& length !== undefined
 		&& zAngle !== undefined ){
-			this.makeGeometry( nearWidth,farWidth,length,zAngle );
+			this.makeGeometry( nearWidth,farWidth,length,0,zAngle );
 			this.wasMade = true;
 		}
 
 	}
 
-	Quad.prototype.makeGeometry = function(nearWidth,farWidth,length,zAngle,x,y){
+	Quad.prototype.makeGeometry = function(nearWidth,farWidth,length,angle,zAngle,x,y){
 		this.geometry.vertices.push( new THREE.Vector3(-nearWidth*0.5, 0.0, 0.0) );
 		this.geometry.vertices.push( new THREE.Vector3( nearWidth*0.5, 0.0, 0.0) );
 		this.geometry.vertices.push( new THREE.Vector3( farWidth*0.5,  length, 0.0) );
 		this.geometry.vertices.push( new THREE.Vector3(-farWidth*0.5,  length, 0.0) );
 		this.geometry.faces.push(new THREE.Face3(0,1,2));
 		this.geometry.faces.push(new THREE.Face3(2,3,0));
+
+		// The problem is we need to add the parent's rotation too
+		// but i think it's only the first rotation (on the x axis) that
+		// needs to be passed to the children.
+		this.geometry.applyMatrix( (new THREE.Matrix4()).makeRotationX(angle) );
 
 		this.geometry.applyMatrix( (new THREE.Matrix4()).makeRotationZ(zAngle) );
 		this.geometry.applyMatrix( (new THREE.Matrix4()).makeTranslation(
@@ -82,12 +100,12 @@ var Quad = (function(THREE){
 
 	};
 
-	Quad.prototype.extend = function( nearWidth, farWidth, length ){
+	Quad.prototype.extend = function( nearWidth, farWidth, length, angle ){
 		if( this.wasMade ){
 			throw new Error( 'Edge has been defined already' );
 		}
 
-		this.makeGeometry( nearWidth,farWidth,length,this.zAngle,this.origin.x,this.origin.y );
+		this.makeGeometry( nearWidth,farWidth,length,angle,this.zAngle,this.origin.x,this.origin.y );
 		
 	};
 
