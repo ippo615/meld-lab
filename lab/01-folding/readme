@@ -3,6 +3,17 @@
 Trying to specify folds on a 2D Plane to create a 3D Shape, similar to
 how cardboard boxes are made.
 
+## TODO
+
+Clean `02-editor/` starting with `preview.js` and `index.html`.
+
+I may also need to think of some better names for some of the stuff in
+preview and quad (ie `disposeChildren` sounds horrible).
+
+Create lots of examples! Not only will it make me a papercraft master
+but it will also expose the shortfalls of the library and maybe make me
+think of better names. Perhaps I should get a book on origami...
+
 ## Method 1
 
 This is lacking exact implementation details. See the other methods
