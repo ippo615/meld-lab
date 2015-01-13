@@ -14,6 +14,10 @@ Create lots of examples! Not only will it make me a papercraft master
 but it will also expose the shortfalls of the library and maybe make me
 think of better names. Perhaps I should get a book on origami...
 
+Add a 'seams' or 'glue strip' function. This will slighly extend (with
+90 degree fold) all of edges that are not connected to anything (so the
+user can cut these out of cardboard and glue them together).
+
 ## Method 1
 
 This is lacking exact implementation details. See the other methods
