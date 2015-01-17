@@ -20,6 +20,8 @@ var Quad = (function(THREE){
 		this.far = null;
 		this.near = null;
 
+		this.localTransform = (new THREE.Matrix4()).identity();
+
 		if( nearWidth !== undefined
 		&& farWidth !== undefined
 		&& length !== undefined
@@ -29,6 +31,14 @@ var Quad = (function(THREE){
 		}
 
 	}
+
+	Quad.prototype.getWorldTransform = function(){
+		if( this.parent ){
+			return (new THREE.Matrix4()).multiplyMatrices( this.parent.getWorldTransform(), this.localTransform );
+		}else{
+			return this.localTransform;
+		}
+	};
 
 	Quad.prototype.makeGeometry = function(nearWidth,farWidth,length,angle,zAngle,x,y){
 		this.geometry.vertices.push( new THREE.Vector3(-nearWidth*0.5, 0.0, 0.0) );
@@ -40,14 +50,36 @@ var Quad = (function(THREE){
 
 		this.angle = angle;
 
-		this.geometry.applyMatrix( (new THREE.Matrix4()).makeRotationX(this.getWorldAngle()) );
+		// NOTE: The true transformation is not applied properly to the
+		// children. We need to do something like:
+		// Quad.prototype.getWorldTransform = function(){
+		//     if( this.parent ){
+		//         return matrixMultiply( this.parent.getWorldTransform(), this.localTransform );
+		//     }else{
+		//         return this.localTransform;
+		//     }
+		// }
+		// this.localTransform = matrix.compose( position, quaternion, scale );
 
-		this.geometry.applyMatrix( (new THREE.Matrix4()).makeRotationZ(zAngle) );
-		this.geometry.applyMatrix( (new THREE.Matrix4()).makeTranslation(
-			this.origin.x,
-			this.origin.y,
-			this.origin.z
-		) );
+		this.localTransform.compose(
+			this.origin,
+			(new THREE.Quaternion()).setFromEuler( new THREE.Euler(
+				angle,
+				0.0,
+				zAngle,
+				'YZX'
+			)),
+			new THREE.Vector3(1,1,1)
+		);
+	
+		//this.geometry.applyMatrix( (new THREE.Matrix4()).makeRotationX(this.getWorldAngle()) );
+
+		//this.geometry.applyMatrix( (new THREE.Matrix4()).makeRotationZ(zAngle) );
+		//this.geometry.applyMatrix( (new THREE.Matrix4()).makeTranslation(
+		//	this.origin.x,
+		//	this.origin.y,
+		//	this.origin.z
+		//) );
 
 		this.right = new Quad();
 		this.left = new Quad();
@@ -67,7 +99,7 @@ var Quad = (function(THREE){
 			0.5*(this.geometry.vertices[0].x + this.geometry.vertices[1].x),
 			0.5*(this.geometry.vertices[0].y + this.geometry.vertices[1].y),
 			0.5*(this.geometry.vertices[0].z + this.geometry.vertices[1].z)
-		);;
+		);
 
 		this.right.zAngle = Math.atan2(
 			this.geometry.vertices[1].y - this.geometry.vertices[2].y,
@@ -98,6 +130,8 @@ var Quad = (function(THREE){
 			0.5*(this.geometry.vertices[3].y + this.geometry.vertices[0].y),
 			0.5*(this.geometry.vertices[3].z + this.geometry.vertices[0].z)
 		);
+
+		this.geometry.applyMatrix( this.getWorldTransform() );
 
 		this.wasMade = true;
 
