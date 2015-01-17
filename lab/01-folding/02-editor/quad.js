@@ -94,11 +94,11 @@ var Quad = (function(THREE){
 			0.5*(this.geometry.vertices[0].z + this.geometry.vertices[1].z)
 		);
 
-		this.right.zAngle = Math.atan2(
+		this.left.zAngle = Math.atan2(
 			this.geometry.vertices[1].y - this.geometry.vertices[2].y,
 			this.geometry.vertices[1].x - this.geometry.vertices[2].x
 		);
-		this.right.origin = new THREE.Vector3(
+		this.left.origin = new THREE.Vector3(
 			0.5*(this.geometry.vertices[1].x + this.geometry.vertices[2].x),
 			0.5*(this.geometry.vertices[1].y + this.geometry.vertices[2].y),
 			0.5*(this.geometry.vertices[1].z + this.geometry.vertices[2].z)
@@ -114,11 +114,11 @@ var Quad = (function(THREE){
 			0.5*(this.geometry.vertices[2].z + this.geometry.vertices[3].z)
 		);
 
-		this.left.zAngle = Math.atan2(
+		this.right.zAngle = Math.atan2(
 			this.geometry.vertices[3].y - this.geometry.vertices[0].y,
 			this.geometry.vertices[3].x - this.geometry.vertices[0].x
 		);
-		this.left.origin = new THREE.Vector3(
+		this.right.origin = new THREE.Vector3(
 			0.5*(this.geometry.vertices[3].x + this.geometry.vertices[0].x),
 			0.5*(this.geometry.vertices[3].y + this.geometry.vertices[0].y),
 			0.5*(this.geometry.vertices[3].z + this.geometry.vertices[0].z)
