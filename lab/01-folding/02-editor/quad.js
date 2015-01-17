@@ -1,9 +1,22 @@
-// 
-// How can I enable easy folding animation?
-// 
-// Should I not work with geometries and switch to THREE.Object3D?
-// Object3D has a heirarchy structure so I can nest and apply
-// transformations easily.
+
+//
+// TODO:
+//  - Clean code
+//  - Allow for easier Quad definitions (via negative lengths):
+//
+//         // Copies the dimensions of the base
+//         base.right.extend( -1, -1, -1, angle );
+//
+//         // Uses the length of the right edge as the nearWidth
+//         base.right.extend( -1, farWidth, length, angle );
+//
+//         // Uses twice the length of the left edge as the farWidth
+//         base.left.extend( nearWidth, -2, length, angle );
+//
+//  - Add a .seam(size,angle) method to create a small seam (for glueing
+//    or sewing) on an edge, equivalent to
+//    `base.right.extend( -1, -0.95, size, angle )`. Maybe this one is
+//    not too useful.
 // 
 
 var Quad = (function(THREE){
@@ -50,17 +63,6 @@ var Quad = (function(THREE){
 
 		this.angle = angle;
 
-		// NOTE: The true transformation is not applied properly to the
-		// children. We need to do something like:
-		// Quad.prototype.getWorldTransform = function(){
-		//     if( this.parent ){
-		//         return matrixMultiply( this.parent.getWorldTransform(), this.localTransform );
-		//     }else{
-		//         return this.localTransform;
-		//     }
-		// }
-		// this.localTransform = matrix.compose( position, quaternion, scale );
-
 		this.localTransform.compose(
 			this.origin,
 			(new THREE.Quaternion()).setFromEuler( new THREE.Euler(
@@ -71,15 +73,6 @@ var Quad = (function(THREE){
 			)),
 			new THREE.Vector3(1,1,1)
 		);
-	
-		//this.geometry.applyMatrix( (new THREE.Matrix4()).makeRotationX(this.getWorldAngle()) );
-
-		//this.geometry.applyMatrix( (new THREE.Matrix4()).makeRotationZ(zAngle) );
-		//this.geometry.applyMatrix( (new THREE.Matrix4()).makeTranslation(
-		//	this.origin.x,
-		//	this.origin.y,
-		//	this.origin.z
-		//) );
 
 		this.right = new Quad();
 		this.left = new Quad();
