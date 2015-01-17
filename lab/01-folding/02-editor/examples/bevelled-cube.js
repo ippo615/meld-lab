@@ -10,10 +10,10 @@ function main( progress ){
 	base.near.extend( size, size, bevelSize, foldAngle );
 	base.far.extend( size, size, bevelSize, foldAngle );
 	
-	base.right.right.extend( bevelSize, bevelSize, bevelSize, foldAngle );
-	base.left.right.extend( bevelSize, bevelSize, bevelSize, foldAngle );
-	base.near.right.extend( bevelSize, bevelSize, bevelSize, foldAngle );
-	base.far.right.extend( bevelSize, bevelSize, bevelSize, foldAngle );
+	base.right.right.extend( bevelSize, 0, bevelSize, foldAngle );
+	base.left.right.extend( bevelSize, 0, bevelSize, foldAngle );
+	base.near.right.extend( bevelSize, 0, bevelSize, foldAngle );
+	base.far.right.extend( bevelSize, 0, bevelSize, foldAngle );
 	
 	base.right.far.extend( size, size, size, foldAngle );
 	base.left.far.extend( size, size, size, foldAngle );
@@ -32,10 +32,10 @@ function main( progress ){
 	base.near.far.right.extend( size, size, bevelSize, foldAngle );
 	base.far.far.right.extend( size, size, bevelSize, foldAngle );
 	
-	base.right.far.far.right.extend( bevelSize, bevelSize, bevelSize, foldAngle );
-	base.left.far.far.right.extend( bevelSize, bevelSize, bevelSize, foldAngle );
-	base.near.far.far.right.extend( bevelSize, bevelSize, bevelSize, foldAngle );
-	base.far.far.far.right.extend( bevelSize, bevelSize, bevelSize, foldAngle );
+	base.right.far.far.right.extend( bevelSize, 0, bevelSize, foldAngle );
+	base.left.far.far.right.extend( bevelSize, 0, bevelSize, foldAngle );
+	base.near.far.far.right.extend( bevelSize, 0, bevelSize, foldAngle );
+	base.far.far.far.right.extend( bevelSize, 0, bevelSize, foldAngle );
 
 	return base;
 }
