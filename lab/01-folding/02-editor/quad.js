@@ -22,18 +22,20 @@
 var Quad = (function(THREE){
 	function Quad(nearWidth,farWidth,length,zAngle,x,y){
 
-		this.parent = null;
 		this.geometry = new THREE.Geometry();
+
+		this.parent = null;
+
 		this.zAngle = zAngle || 0.0;
 		this.angle = 0.0;
 		this.origin = new THREE.Vector3( x||0, y||0, 0 );
+		this.localTransform = (new THREE.Matrix4()).identity();
+
 		this.wasMade = false;
 		this.right = null;
 		this.left = null;
 		this.far = null;
 		this.near = null;
-
-		this.localTransform = (new THREE.Matrix4()).identity();
 
 		if( nearWidth !== undefined
 		&& farWidth !== undefined
@@ -53,7 +55,7 @@ var Quad = (function(THREE){
 		}
 	};
 
-	Quad.prototype.makeGeometry = function(nearWidth,farWidth,length,angle,zAngle,x,y){
+	Quad.prototype.makeGeometry = function(nearWidth,farWidth,length,angle,zAngle){
 		this.geometry.vertices.push( new THREE.Vector3(-nearWidth*0.5, 0.0, 0.0) );
 		this.geometry.vertices.push( new THREE.Vector3( nearWidth*0.5, 0.0, 0.0) );
 		this.geometry.vertices.push( new THREE.Vector3( farWidth*0.5,  length, 0.0) );
@@ -128,13 +130,6 @@ var Quad = (function(THREE){
 
 		this.wasMade = true;
 
-	};
-
-	Quad.prototype.getWorldAngle = function(){
-		if( this.parent === null ){
-			return this.angle;
-		}
-		return this.angle + this.parent.getWorldAngle();
 	};
 
 	Quad.prototype.extend = function( nearWidth, farWidth, length, angle ){
