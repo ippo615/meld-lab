@@ -65,8 +65,16 @@ function main( progress ){
 					color: 0x00AABB,
 					emissive: 0x006060,
 					shininess: 8,
-					side: THREE.DoubleSide
-					//side: THREE.FrontSide
+					//side: THREE.DoubleSide
+					side: THREE.FrontSide
+				}),
+				new THREE.MeshPhongMaterial({
+					specular: 0xFFCCAA,
+					color: 0xBBAA00,
+					emissive: 0x606000,
+					shininess: 8,
+					//side: THREE.DoubleSide
+					side: THREE.BackSide
 				}),
 				new THREE.MeshBasicMaterial( {
 					color: 0x000000,
@@ -118,8 +126,16 @@ function main( progress ){
 					color: 0x00AABB,
 					emissive: 0x006060,
 					shininess: 8,
-					side: THREE.DoubleSide
-					//side: THREE.FrontSide
+					//side: THREE.DoubleSide
+					side: THREE.FrontSide
+				}),
+				new THREE.MeshPhongMaterial({
+					specular: 0xFFCCAA,
+					color: 0xBBAA00,
+					emissive: 0x606000,
+					shininess: 8,
+					//side: THREE.DoubleSide
+					side: THREE.BackSide
 				}),
 				new THREE.MeshBasicMaterial( {
 					color: 0x000000,
