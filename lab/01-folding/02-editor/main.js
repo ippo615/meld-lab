@@ -247,9 +247,9 @@ function loadFileInEditor(file){
 	readFileAsText( file, function(e){
 		var reader = e.target;
 		editor.setValue(reader.result);
+		editor.clearSelection();
+		editor.focus();
 	});
-	
-	console.info( file );
 }
 
 // The first one took a really long time ~1min but then the rest were
@@ -291,6 +291,8 @@ window.addEventListener('load', function(){
 		$.ajax(codeFile, {
 			success: function(text){
 				editor.setValue( text );
+				editor.clearSelection();
+				editor.focus();
 			}
 		});
 	}
