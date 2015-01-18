@@ -170,6 +170,16 @@ function buttonResize(){
 }
 window.addEventListener('resize',buttonResize);
 
+btnDownloadStl.onclick = function(){
+	// TODO: why does this not load in MakerWare? (blender is ok)
+	var geometry = foldFunction(1.0).getGeometry();
+	geometry.mergeVertices();
+	geometry.computeFaceNormals();
+	geometry.computeVertexNormals();
+	console.info( geometry );
+	saveSTL( geometry, 'folded-mesh.stl' );
+};
+
 // ---------------------------------------------- [ User Code Runner ] -
 
 function compileCode(code) {
