@@ -278,3 +278,20 @@ function resizeDropzone(){
 resizeDropzone();
 window.addEventListener( 'resize', resizeDropzone );
 
+// Resize the body so that we do not have a scroll bar in iframes
+window.addEventListener( 'resize', function(){
+	document.body.style.width = window.innerWidth + 'px';
+	document.body.style.height = window.innerHeight + 'px';
+});
+
+// Let the user load a specific file by specifying it in the URL
+window.addEventListener('load', function(){
+	if( window.location.href.indexOf('?') > -1 ){
+		var codeFile = window.location.href.split('?')[1].replace(/\/$/,'');
+		$.ajax(codeFile, {
+			success: function(text){
+				editor.setValue( text );
+			}
+		});
+	}
+});

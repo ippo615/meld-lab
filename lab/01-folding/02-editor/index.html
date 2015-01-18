@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
 		<title>Folding</title>
 		<style>
-			body { padding:0; margin:0; }
+			body { padding:0; margin:0; overflow: hidden; }
 			canvas { position: absolute; }
 			#editor, iframe, object { position: absolute; right:0; top:0; }
 			.btn-download {
@@ -33,18 +34,20 @@
 
 	<!--
 	TODO
-	 - drag-and-drop script loading
-	 - export folded to stl
-	 - export flat to svg
-	 - export flat to svg with cut/paste instructions?
-	 - slightly hidden panel for options/help/info
-	 - better error feedback (ie a toast when there is error in the user's script)
+	[X] drag-and-drop script loading
+	[-] export folded to stl
+	[ ] export folded THREE.js geometry?
+	[-] export flat to svg
+	[ ] export flat to svg with cut/fold/paste instructions?
+	[ ] slightly hidden panel for options/help/info
+	[-] better error feedback (ie a toast when there is error in the user's script)
+	[X] package as embed-able widget (done via iframe and url parms)
 	-->
 
 	<!-- 3D Library (http://threejs.org/) -->
-	<script src="../../../lib/three.js"></script>
+	<!--<script src="../../../lib/three.js"></script>-->
 	<!--<script src="http://threejs.org/build/three.min.js"></script>-->
-	<!--<script src="https://raw.githubusercontent.com/mrdoob/three.js/r69/build/three.min.js"></script>-->
+	<script src="https://raw.githubusercontent.com/mrdoob/three.js/r69/build/three.min.js"></script>
 
 	<!-- Code Editor (http://ace.c9.io/) -->
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js" type="text/javascript" charset="utf-8"></script>
