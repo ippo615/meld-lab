@@ -1,15 +1,9 @@
 /*
-Paul Kaplan, @ifitdidntwork
- 
-Create an ASCII STL file from a THREE.js mesh
-that can be saved save from browser and 3D printed
---------------------------------------------------
-See further explanation here:
-http://buildaweso.me/project/2013/2/25/converting-threejs-objects-to-stl-files
---------------------------------------------------
-Saving the file out of the browser is done using FileSaver.js
-find that here: https://github.com/eligrey/FileSaver.js
-*/
+ * Modified STL ASCII saver from: Paul Kaplan, @ifitdidntwork
+ * 
+ * See further explanation here:
+ * http://buildaweso.me/project/2013/2/25/converting-threejs-objects-to-stl-files
+ */
 
 function stringifyVector(vec){
 	return ""+vec.x+" "+vec.y+" "+vec.z;
@@ -22,8 +16,8 @@ function stringifyVertex(vec){
 function generateSTL(geometry){
 	var vertices = geometry.vertices;
 	var tris = geometry.faces;
-	 
-	var stl = "solid pixel";
+	
+	var stl = "solid fold.js\n";
 	for(var i = 0; i<tris.length; i++){
 		stl += ("facet normal "+stringifyVector( tris[i].normal )+" \n");
 		stl += ("outer loop \n");
