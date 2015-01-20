@@ -18,6 +18,15 @@
 //    `base.right.extend( -1, -0.95, size, angle )`. Maybe this one is
 //    not too useful.
 // 
+//  - Generate correct STL outputs: currently you can fold a part and
+//    not have it match up perfectly with another edge. This can
+//    generate stl files that look ok but cannot be 3d-printed. Provide
+//    a way to ensure that edges mate exactly (or really closely). Also
+//    the outside can become the inside on certain folds (see the
+//    snowman example) we need to ensure that for STL printing that the
+//    outside is the outside. Parts can be fixed in netfabb but I would
+//    rather generate the correct output.
+//
 
 var Quad = (function(THREE){
 	function Quad(nearWidth,farWidth,length,zAngle,x,y){
