@@ -173,11 +173,14 @@ window.addEventListener('resize',buttonResize);
 btnDownloadStl.onclick = function(){
 	// TODO: should +1.0 be outside-out and -1.0 be inside-out?
 	// TODO: better scale? scaling options?
-	var geometry = foldFunction(-1.0).getGeometry();
-	geometry.mergeVertices();
-	geometry.computeFaceNormals();
-	geometry.computeVertexNormals();
-	saveSTL( geometry, 'folded-mesh.stl' );
+	var fold = foldFunction(-1.0);
+	var stl = new Manifold( fold.getGeometry() );
+	stl.closeHoles(0.05);
+	stl.geometry.mergeVertices();
+	stl.geometry.verticesNeedUpdate = true;
+	stl.geometry.computeFaceNormals();
+	stl.geometry.computeVertexNormals();
+	saveSTL( stl.geometry, 'folded-mesh.stl' );
 };
 
 // ---------------------------------------------- [ User Code Runner ] -
@@ -208,6 +211,10 @@ function runNewCode(code) {
 	try {
 		var flat = main(0);
 		var fold = main(1);
+		var stl = new Manifold( fold.getGeometry() );
+		//stl.classifyEdges();
+		stl.closeHoles(0.5);
+		//stl.classifyEdges();
 	} catch (e) {
 		showError(e);
 		return;

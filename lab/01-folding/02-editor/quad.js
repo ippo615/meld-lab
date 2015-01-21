@@ -26,6 +26,8 @@
 //    snowman example) we need to ensure that for STL printing that the
 //    outside is the outside. Parts can be fixed in netfabb but I would
 //    rather generate the correct output.
+//    More Info: http://www.digits2widgets.com/FileFixing.html
+//    More Info: http://www.shapeways.com/tutorials/fixing-non-manifold-models
 //
 
 var Quad = (function(THREE){
