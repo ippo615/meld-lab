@@ -100,3 +100,41 @@ function nest( geometry, triNode, root ){
 var heir = new TriNode(0,null);
 nest( geometry, heir, heir );
 console.info( heir );
+
+function nestToTri( geometry, nest ){
+
+	// There is more to be done in this function: adding the children.
+	// Some things we need to determine:
+	//  - for the root triangle:
+	//    - which of a,b,c is base,left,right
+	//  - for the other triangles:
+	//    - which of a,b,c is left,right (we know base is the parent)
+	// how to compute/determine that?
+	//     Maybe just match vertices
+	// perhaps api:
+	//     computeLR( parent[tri], child[triNode] ) -> {
+	//         left: { pos, len },
+	//         righ: { pos, len }
+	//     }
+	// or (also needs geometry parameter):
+	//     nestExtend( triParent, triNodeChild )
+	//     could be recursive, a null parent sets the base
+	
+	var face = geometry.faces[ nest.face ];
+	var a = geometry.vertices[ face.a ];
+	var b = geometry.vertices[ face.b ];
+	var c = geometry.vertices[ face.c ];
+
+	var base = new Tri( a.x, a.y, b.x, b.y );
+
+	var ab = a.clone().sub(b);
+	var ac = a.clone().sub(c);
+	var pos = ab.dot( ac ) / ( ab.length()*ac.length() );
+	var baseCoord = a.clone().add( ab.clone().normalize().multiplyScalar( pos ) );
+	var len = baseCoord.sub( c ).length();
+	base.extend( pos, len );
+
+	return base;
+}
+
+console.info( nestToTri( geometry, heir ) );

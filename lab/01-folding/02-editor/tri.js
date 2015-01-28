@@ -14,6 +14,7 @@ var Tri = (function(THREE){
 		this.wasMade = false;
 		this.right = null;
 		this.left = null;
+		this.base = null;
 	}
 
 	Tri.prototype.extend = function( position, length ){
@@ -32,6 +33,11 @@ var Tri = (function(THREE){
 
 		this.wasMade = true;
 
+		this.base = new Tri(
+			this.vertices[1].x, this.vertices[1].y,
+			this.vertices[0].x, this.vertices[0].y
+		);
+
 		this.right = new Tri(
 			this.vertices[0].x, this.vertices[0].y,
 			this.vertices[2].x, this.vertices[2].y
@@ -42,6 +48,7 @@ var Tri = (function(THREE){
 			this.vertices[1].x, this.vertices[1].y
 		);
 
+		this.base.parent = this;
 		this.left.parent = this;
 		this.right.parent = this;
 
@@ -54,41 +61,13 @@ var Tri = (function(THREE){
 
 	Tri.prototype.getGeometry = function(){
 		var geometry = this.geometry.clone();
-		if( this.right.wasMade ){ geometry.merge( this.right.getGeometry() ); }
+		if( this.base.wasMade ){ geometry.merge( this.base.getGeometry() ); }
 		if( this.left.wasMade ){ geometry.merge( this.left.getGeometry() ); }
+		if( this.right.wasMade ){ geometry.merge( this.right.getGeometry() ); }
 		geometry.mergeVertices();
 		return geometry;
 	};
 
 	return Tri;
 })(THREE);
-
-
-function main( progress ){
-	var foldAngle = Math.PI/2.0 * progress;
-	var size = 1.0;
-
-	var base = new Tri( 0, 0, 1, 0 );
-	base.extend( 0, 1 );
-
-    base.right.extend( 0, -1 );
-    base.left.extend( 0, -1 );
-    
-    base.right.right.extend(0,1);
-    base.right.left.extend(0,1);
-
-	return base;
-}
-
-
-function main( progress ){
-	var foldAngle = Math.PI/2.0 * progress;
-	var size = 1.0;
-
-	var base = new Tri( 0, 0, 1, 0 );
-	base.extend( 0, 1 );
-
-	return base;
-}
-
 
