@@ -73,3 +73,18 @@ function main( progress ){
 	return tri;
 }
 
+// Manual Folding Triangle:
+
+function main( progress ){
+	var foldAngle = Math.PI/4.0 * progress;
+	var size = 1.0;
+
+	var base = new TriFold( 1, 1 );
+	base.extend(0.5,1);
+	base.right.extend( 0.5, 1, foldAngle );
+	base.right.right.extend( 0.5, 1, foldAngle );
+	base.right.left.extend( 0.5, 1, foldAngle );
+	base.left.extend( 0.5, 1, foldAngle );
+
+	return base;
+}
