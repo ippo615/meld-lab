@@ -138,3 +138,32 @@ function nestToTri( geometry, nest ){
 }
 
 console.info( nestToTri( geometry, heir ) );
+
+function triangleToTriFold( geometry, faceIndex, sideOrder ){
+	var face = geometry.faces[ faceIndex ];
+	var a = geometry.vertices[ face[sideOrder[0]] ];
+	var b = geometry.vertices[ face[sideOrder[1]] ];
+	var c = geometry.vertices[ face[sideOrder[2]] ];
+
+	var base = b.clone().sub(a);
+	var right = c.clone().sub(b);
+	var left = a.clone.sub(c);
+
+	var origin = base.clone().multiplyScalar( 0.5 );
+	
+	var ab = a.clone().sub(b);
+	var ac = a.clone().sub(c);
+	var pos = ab.dot( ac ) / ( ab.length()*ac.length() );
+	var baseCoord = a.clone().add( ab.clone().normalize().multiplyScalar( pos ) );
+	var len = baseCoord.sub( c ).length();
+	
+	var angle = Math.atan2( ab.y, ab.x );
+
+	return {
+		pos: pos,
+		len: len,
+		angle: angle
+	};
+}
+
+
